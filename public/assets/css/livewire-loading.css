@@ -1,0 +1,11 @@
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Adjust the height based on your design requirements */
+}
+
+.loading-image {
+    width: 100px; /* Adjust the image size based on your design requirements */
+    height: 100px; /* Adjust the image size based on your design requirements */
+}

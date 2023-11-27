@@ -1,0 +1,209 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\API\BaseController;
+use App\Models\Docter;
+use App\Models\schedule;
+use App\Models\TodayShedule;
+use Carbon\Carbon;
+use DateInterval;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+class TokenGenerationController extends BaseController
+{
+
+    public function generateTokenCards(Request $request)
+    {
+        try {
+
+            $cards = [];
+            $counter = 1; // Initialize the counter before the loop
+
+
+            $startDateTime = $request->startingTime;
+            $endDateTime = $request->endingTime;
+            $duration = $request->timeduration;
+
+            // Use Carbon to parse input times
+            $startTime = Carbon::createFromFormat('H:i', $startDateTime);
+            $endTime = Carbon::createFromFormat('H:i', $endDateTime);
+
+            // Calculate the time interval based on the duration
+            $timeInterval = new DateInterval('PT' . $duration . 'M');
+
+            // Generate tokens at regular intervals
+            $currentTime = $startTime;
+
+            while ($currentTime <= $endTime) {
+                $cards[] = [
+                    'Number' => $counter, // Use the counter for auto-incrementing 'Number'
+                    'Time' => $currentTime->format('H:i'),
+                    'Tokens' => $currentTime->add($timeInterval)->format('H:i'),
+                    'is_booked' => 0,
+                    'is_cancelled' => 0
+                ];
+
+                $counter++; // Increment the counter for the next card
+            }
+            return response()->json(['cards' => $cards], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function getTodayTokens(Request $request)
+    {
+        // Get the authenticated user
+        $user = $request->user();
+
+        if (!$user) {
+            return $this->sendError('Authentication Error', 'User not authenticated', 401);
+        }
+        $today = now()->toDateString();
+
+        $schedules = Schedule::whereHas('docter', function ($query) use ($user) {
+            $query->where('UserId', $user->id);
+        })->where('date', $today)->get();
+
+
+        $tokensByClinic = [];
+
+        foreach ($schedules as $schedule) {
+            $doctor = $schedule->doctor;
+
+            // Assuming you have a relationship set up for the clinics in Doctor model
+            $clinics = $doctor->clinics;
+
+            foreach ($clinics as $clinic) {
+                $clinicId = $clinic->hospital_Id;
+
+                if (!isset($tokensByClinic[$clinicId])) {
+                    $tokensByClinic[$clinicId] = [];
+                }
+
+                // Decode the JSON data
+                $tokens = json_decode($schedule->tokens);
+
+                $tokensByClinic[$clinicId][] = [
+                    'clinic' => $clinic,
+                    'tokens' => $tokens,
+                ];
+            }
+        }
+        if (!empty($tokensByClinic)) {
+            return $this->sendResponse('todaytokens', $tokensByClinic, '1', 'Today\'s tokens retrieved successfully');
+        } else {
+            return $this->sendError('No Schedule Found', 'No schedule for today found for the logged-in user');
+        }
+    }
+
+    public function todayTokenSchedule(Request $request)
+    {
+        $rules = [
+            'doctor_id'     => 'required',
+            'hospital_id'   => 'required',
+            'date'          => 'required',
+            'custome_time'  => 'required|numeric|min:0',
+            'delay_type'    => 'required|in:1,2,3', //1 for late , 2 for earliy
+            'start_time'    => 'required_if:delay_type,3',
+            'end_time'      => 'required_if:delay_type,3',
+        ];
+        $messages = [
+            'date.required' => 'Date is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $doctor  = Docter::where('id', $request->doctor_id)->first();
+            if (!$doctor) {
+                return response()->json(['status' => false, 'message' => 'Doctor not found']);
+            }
+            $schedule = schedule::where('docter_id', $doctor->id)->where('hospital_Id', $request->hospital_id)->first();
+
+            $requestDate = Carbon::parse($request->date);
+            $startDate = Carbon::parse($schedule->date);
+            $scheduledUptoDate = Carbon::parse($schedule->scheduleupto);
+            // Get the day of the week
+            $dayOfWeek = $requestDate->format('l'); // 'l' format gives the full name of the day
+
+            $jsonString = str_replace("'", "\"", $schedule->selecteddays);
+
+            $allowedDaysArray = json_decode($jsonString);
+
+            if (!$requestDate->between($startDate, $scheduledUptoDate)) {
+                return response()->json(['status' => true, 'message' => 'Date is this not found in year']);
+            }
+            if (!in_array($dayOfWeek, $allowedDaysArray)) {
+                return response()->json(['status' => true, 'message' => 'Selected day not found on your scheduled days']);
+            }
+            // Set the start time and end time
+            $startTime = Carbon::parse($schedule->startingTime);
+            $endTime = Carbon::parse($schedule->endingTime);
+
+            // Generate time slots in JSON format
+            $timeSlots = [];
+            $count = 0;
+
+            if ($request->delay_type == '2') {
+                // Add 30 minutes to the start time
+                $startTime->addMinutes($request->custome_time);
+            }
+            if ($request->delay_type == '1') { // Subtract 30 minutes from the start time
+                $startTime->subMinutes($request->custome_time);
+            }
+
+            if ($request->delay_type == 3) {
+                $excludeStartTime = Carbon::parse($request->start_time);
+                $excludeEndTime = Carbon::parse($request->end_time);
+                while ($startTime < $endTime) {
+                    $slotStartTime = $startTime->format('h:i');
+                    $startTime->addMinutes($schedule->timeduration);
+
+                    // Skip slots that fall within the excluded time range
+                    if ($startTime >= $excludeStartTime && $startTime <= $excludeEndTime) {
+                        continue;
+                    }
+                    $slotEndTime = $startTime->format('h:i');
+                    $timeSlots[] = [
+                        "No"   => $count++,
+                        'Time' => $slotStartTime,
+                        'Tokens' => $slotEndTime,
+                    ];
+                }
+            } else {
+                // Calculate the number of slots
+                $totalSlots = $startTime->diffInMinutes($endTime) / $schedule->timeduration;
+                for ($i = 1; $i <= $totalSlots; $i++) {
+                    $slot = [
+                        'No' => $i,
+                        'Time' => $startTime->format('h:i A'),
+                        'Tokens' => $startTime->addMinutes($schedule->timeduration)->format('h:i A')
+                    ];
+                    $timeSlots[] = $slot;
+                }
+            }
+
+            $checkIfexist = TodayShedule::where('docter_id', $doctor->id)->whereDate('date', $request->date)->where('hospital_Id', $request->hospital_id)->first();
+            if ($checkIfexist) {
+                $schedule = $checkIfexist;
+            } else {
+                $schedule = new TodayShedule();
+            }
+            $schedule->docter_id = $request->doctor_id;
+            $schedule->hospital_id = $request->hospital_id;
+            $schedule->date = $request->date;
+            $schedule->delay_time = $request->custome_time;
+            $schedule->delay_type = $request->delay_type;
+            $schedule->tokens = json_encode($timeSlots);
+            $schedule->save();
+
+            return response()->json(['status' => true, 'message' => 'success']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => "Internal Server Error"]);
+        }
+    }
+}
