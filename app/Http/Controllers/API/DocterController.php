@@ -11,6 +11,7 @@ use App\Models\Specialize;
 use App\Models\Specification;
 use App\Models\Subspecification;
 use App\Models\Symtoms;
+use App\Models\TodayShedule;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -494,9 +495,19 @@ class DocterController extends BaseController
             if (!in_array($dayOfWeek, $allowedDaysArray)) {
                 return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this day']);
             }
+
             $shedulded_tokens =  schedule::select('id', 'tokens', 'date', 'hospital_Id', 'startingTime', 'endingTime')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
             $shedulded_tokens['tokens'] = json_decode($shedulded_tokens->tokens);
 
+            $today_schedule = TodayShedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date',$request->date)->first();
+
+            if($today_schedule){
+                $today_schedule['startingTime'] = $shedulded_tokens->startingTime ;
+                $today_schedule['endingTime']   = $shedulded_tokens->endingTime ;
+                $shedulded_tokens = $today_schedule ;
+
+                $shedulded_tokens['tokens'] = json_decode($today_schedule->tokens);
+            }
             return response()->json(['status' => true, 'token_data' => $shedulded_tokens]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => "Internal Server Error"]);

@@ -132,7 +132,6 @@ Route::group(['prefix' => 'docter'], function () {
    Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
    Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
 
-
 });
 
 
