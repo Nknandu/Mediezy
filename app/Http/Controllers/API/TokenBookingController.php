@@ -6,11 +6,15 @@ use App\Http\Controllers\API\BaseController;
 use App\Models\Docter;
 use App\Models\DocterAvailability;
 use App\Models\Medicine;
+use App\Models\Patient;
 use App\Models\Symtoms;
 use App\Models\TokenBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class TokenBookingController extends BaseController
 {
@@ -82,88 +86,120 @@ class TokenBookingController extends BaseController
     //     return $this->sendResponse("TokenBooking", $tokenBooking, '1', 'Token Booked successfully.');
     // }
 
-
     public function bookToken(Request $request)
     {
-        // Validate request data
-        $this->validate($request, [
-            'BookedPerson_id' => 'required',
-            'PatientName' => 'required',
-            'gender' => 'required',
-            'age' => 'required',
-            'MobileNo' => 'required',
-            'date' => 'required|date_format:Y-m-d',
-            'TokenNumber' => 'required',
-            'TokenTime' => 'required',
-            'whenitstart' => 'required',
-            'whenitcomes' => 'required',
-            'regularmedicine' => 'required',
-            'doctor_id' => 'required',
-            'Appoinmentfor1' => 'required|array',
-            'Appoinmentfor2' => 'required|array',
-        ]);
+        try {
+            // Validate request data
+            $this->validate($request, [
+                'BookedPerson_id' => 'required',
+                'PatientName' => 'required',
+                'gender' => 'required',
+                'age' => 'required',
+                'MobileNo' => 'required',
+                'date' => 'required|date_format:Y-m-d',
+                'TokenNumber' => 'required',
+                'TokenTime' => 'required',
+                'whenitstart' => 'required',
+                'whenitcomes' => 'required',
+                'regularmedicine' => 'required',
+                'doctor_id' => 'required',
+                'Appoinmentfor1' => 'required|array',
+                'Appoinmentfor2' => 'required|array',
+                'clinic_id'=> 'required'
+            ]);
 
+            $isDoctor = $request->has('doctor_id');
+            $specializationId = null;
 
-        $isDoctor = $request->has('doctor_id');
-        $specializationId = null;
-
-        if ($isDoctor) {
-
-            $specializationId = Docter::where('id', $request->input('doctor_id'))->value('specialization_id');
-        }
-
-
-        $symptomIds1 = [];
-
-        foreach ($request->input('Appoinmentfor1') as $symptomName) {
-            $symptom = Symtoms::firstOrNew(['symtoms' => $symptomName]);
-
-            if (!$symptom->exists) {
-                $symptom->specialization_id = $specializationId;
-                $symptom->save();
+            if ($isDoctor) {
+                $specializationId = Docter::where('id', $request->input('doctor_id'))->value('specialization_id');
             }
 
-            $symptomIds1[] = $symptom->id;
-        }
+            $symptomIds1 = [];
 
+            foreach ($request->input('Appoinmentfor1') as $symptomName) {
+                $symptom = Symtoms::firstOrNew(['symtoms' => $symptomName]);
 
-        $symptomIds2 = array_map('intval', $request->input('Appoinmentfor2'));
+                if (!$symptom->exists) {
+                    $symptom->specialization_id = $specializationId;
+                    $symptom->save();
+                }
 
-        foreach ($symptomIds2 as $symptomId) {
-            $symptom = Symtoms::find($symptomId);
-            if (!$symptom) {
-                // Display a message or take appropriate action
-                return $this->sendError('Invalid Appoinmentfor2 ID', 'The specified Appoinmentfor2 ID does not exist in the symptoms table.', 400);
+                $symptomIds1[] = $symptom->id;
             }
+
+            $symptomIds2 = array_map('intval', $request->input('Appoinmentfor2'));
+
+            foreach ($symptomIds2 as $symptomId) {
+                $symptom = Symtoms::find($symptomId);
+                if (!$symptom) {
+                    // Display a message or take appropriate action
+                    return $this->sendError('Invalid Appoinmentfor2 ID', 'The specified Appoinmentfor2 ID does not exist in the symptoms table.', 400);
+                }
+            }
+
+            $existingSymptoms2 = Symtoms::whereIn('id', $symptomIds2)->get();
+
+            // Check if the patient already exists
+            $existingPatient = Patient::where('firstname', $request->input('PatientName'))
+                ->where('mobileNo', $request->input('MobileNo'))
+                ->first();
+
+            if ($existingPatient) {
+                // If patient exists, use existing patient ID
+                $patientId = $existingPatient->id;
+            } else {
+                // If patient doesn't exist, create a new patient
+                $userId = DB::table('users')->insertGetId([
+                    'firstname' => $request->input('PatientName'),
+                    'mobileNo' => $request->input('MobileNo'),
+                    'user_role' => 3,
+                ]);
+
+                $patientId = DB::table('patient')->insertGetId([
+                    'firstname' => $request->input('PatientName'),
+                    'mobileNo' => $request->input('MobileNo'),
+                    'UserId' => $userId,
+                ]);
+            }
+
+            // Create a new token booking with the current time
+            $tokenBooking = DB::transaction(function () use ($request, $isDoctor, $symptomIds1, $symptomIds2, $patientId) {
+                $bookingData = [
+                    'BookedPerson_id' => $request->input('BookedPerson_id'),
+                    'PatientName' => $request->input('PatientName'),
+                    'gender' => $request->input('gender'),
+                    'age' => $request->input('age'),
+                    'MobileNo' => $request->input('MobileNo'),
+                    'Appoinmentfor_id' => json_encode(['Appoinmentfor1' => $symptomIds1, 'Appoinmentfor2' => $symptomIds2]),
+                    'date' => $request->input('date'),
+                    'TokenNumber' => $request->input('TokenNumber'),
+                    'TokenTime' => $request->input('TokenTime'),
+                    'doctor_id' => $request->input('doctor_id'),
+                    'whenitstart' => $request->input('whenitstart'),
+                    'whenitcomes' => $request->input('whenitcomes'),
+                    'regularmedicine' => $request->input('regularmedicine'),
+                    'Bookingtime' => now(),
+                    'patient_id' => $patientId,
+                    'clinic_id' => $request->input('clinic_id')
+                ];
+
+                return TokenBooking::create($bookingData);
+            });
+
+            // Return a success response
+            return $this->sendResponse("TokenBooking", $tokenBooking, '1', 'Token Booked successfully.');
+        } catch (ValidationException $e) {
+            // Handle validation errors
+            return $this->sendError('Validation Error', $e->errors(), 422);
+        } catch (QueryException $e) {
+            // Handle database query errors
+            return $this->sendError('Database Error', $e->getMessage(), 500);
+        } catch (\Exception $e) {
+            // Handle other unexpected errors
+            return $this->sendError('Error', $e->getMessage(), 500);
         }
-
-        $existingSymptoms2 = Symtoms::whereIn('id', $symptomIds2)->get();
-
-
-
-        // Create a new token booking with the current time
-        $tokenBooking = DB::transaction(function () use ($request, $isDoctor, $symptomIds1, $symptomIds2) {
-            $bookingData = [
-                'BookedPerson_id' => $request->input('BookedPerson_id'),
-                'PatientName' => $request->input('PatientName'),
-                'gender' => $request->input('gender'),
-                'age' => $request->input('age'),
-                'MobileNo' => $request->input('MobileNo'),
-                'Appoinmentfor_id' => json_encode(['Appoinmentfor1' => $symptomIds1, 'Appoinmentfor2' => $symptomIds2]),
-                'date' => $request->input('date'),
-                'TokenNumber' => $request->input('TokenNumber'),
-                'TokenTime' => $request->input('TokenTime'),
-                'doctor_id' => $request->input('doctor_id'),
-                'Bookingtime' => now(),
-            ];
-
-            return TokenBooking::create($bookingData);
-        });
-
-        // Return a success response
-        return $this->sendResponse("TokenBooking", $tokenBooking, '1', 'Token Booked successfully.');
     }
-
 
 
 

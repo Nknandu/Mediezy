@@ -17,5 +17,5 @@ class TokenBooking extends Model
     'Appoinmentfor_id',	'date',	'TokenNumber',	'TokenTime',
     'Bookingtime',	'Is_checkIn'	,'Is_completed'	,'Is_canceled',	'whenitstart',
     'whenitcomes'	,'regularmedicine',	'amount',
-    'paymentmethod','created_at','updated_at'	];
+    'paymentmethod','created_at','updated_at','	clinic_id'	];
 }
