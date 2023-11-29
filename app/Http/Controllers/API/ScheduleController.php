@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
 use App\Models\schedule;
+use App\Models\TodaySchedule;
 use App\Models\TokenBooking;
 use Carbon\Carbon;
 use Faker\Core\DateTime;
@@ -19,7 +20,6 @@ class ScheduleController extends BaseController
      */
     public function index()
     {
-
     }
 
     /**
@@ -123,102 +123,102 @@ class ScheduleController extends BaseController
      * Display the specified resource.
      */
 
-// public function show($date)
-// {
-//     // Check if the user is authenticated
-//     if (Auth::check()) {
-//         // Get the logged-in user
-//         $user = Auth::user();
+    // public function show($date)
+    // {
+    //     // Check if the user is authenticated
+    //     if (Auth::check()) {
+    //         // Get the logged-in user
+    //         $user = Auth::user();
 
-//         // Find the schedule for the logged-in user based on the given date
-//         $schedule = Schedule::where('docter_id', $user->id)
-//                             ->where('date', '<=', $date)
-//                             ->where('scheduleupto', '>=', $date)
-//                             ->first();
+    //         // Find the schedule for the logged-in user based on the given date
+    //         $schedule = Schedule::where('docter_id', $user->id)
+    //                             ->where('date', '<=', $date)
+    //                             ->where('scheduleupto', '>=', $date)
+    //                             ->first();
 
-//         if (is_null($schedule)) {
-//             return $this->sendError('Schedule not found for the given date.');
-//         }
+    //         if (is_null($schedule)) {
+    //             return $this->sendError('Schedule not found for the given date.');
+    //         }
 
-//         // Convert the selecteddays string to an array after removing quotes and extra spaces
-//         $selectedDaysArray = array_map('trim', explode(',', str_replace(['[', ']', '"'], '', $schedule->selecteddays)));
+    //         // Convert the selecteddays string to an array after removing quotes and extra spaces
+    //         $selectedDaysArray = array_map('trim', explode(',', str_replace(['[', ']', '"'], '', $schedule->selecteddays)));
 
-//         // Set the transformed selecteddays array back to the schedule
-//         $schedule->selecteddays = $selectedDaysArray;
+    //         // Set the transformed selecteddays array back to the schedule
+    //         $schedule->selecteddays = $selectedDaysArray;
 
-//         // Decode the tokens JSON string
-//         $tokensArray = json_decode($schedule->tokens, true);
+    //         // Decode the tokens JSON string
+    //         $tokensArray = json_decode($schedule->tokens, true);
 
-//         // Transform the tokens array structure
-//         $transformedTokens = array_map(function($token) {
-//             return [
-//                 'Number' => $token['Number'],
-//                 'StartingTime' => $token['Time'],
-//                 'EndingTime' => $token['Tokens'],
-//             ];
-//         }, $tokensArray);
+    //         // Transform the tokens array structure
+    //         $transformedTokens = array_map(function($token) {
+    //             return [
+    //                 'Number' => $token['Number'],
+    //                 'StartingTime' => $token['Time'],
+    //                 'EndingTime' => $token['Tokens'],
+    //             ];
+    //         }, $tokensArray);
 
-//         // Set the transformed tokens array back to the schedule
-//         $schedule->tokens = $transformedTokens;
+    //         // Set the transformed tokens array back to the schedule
+    //         $schedule->tokens = $transformedTokens;
 
-//         // Return the modified response
-//         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
-//     } else {
-//         // Handle the case where the user is not authenticated
-//         return $this->sendError('User not authenticated.', [], 401);
-//     }
-// }
+    //         // Return the modified response
+    //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
+    //     } else {
+    //         // Handle the case where the user is not authenticated
+    //         return $this->sendError('User not authenticated.', [], 401);
+    //     }
+    // }
 
-// date-22/11/2023
-// public function show($date)
-// {
-//     // Check if the user is authenticated
-//     if (Auth::check()) {
-//         // Get the logged-in user
-//         $user = Auth::user();
+    // date-22/11/2023
+    // public function show($date)
+    // {
+    //     // Check if the user is authenticated
+    //     if (Auth::check()) {
+    //         // Get the logged-in user
+    //         $user = Auth::user();
 
-//         // Find the schedule for the logged-in user based on the given date
-//         $schedule = Schedule::where('docter_id', $user->id)
-//                             ->where('date', '<=', $date)
-//                             ->where('scheduleupto', '>=', $date)
-//                             ->first();
+    //         // Find the schedule for the logged-in user based on the given date
+    //         $schedule = Schedule::where('docter_id', $user->id)
+    //                             ->where('date', '<=', $date)
+    //                             ->where('scheduleupto', '>=', $date)
+    //                             ->first();
 
-//         if (is_null($schedule)) {
-//             return $this->sendError('Schedule not found for the given date.');
-//         }
+    //         if (is_null($schedule)) {
+    //             return $this->sendError('Schedule not found for the given date.');
+    //         }
 
-//         // Convert the selecteddays string to an array after removing quotes and extra spaces
-//         $selectedDaysArray = array_map('trim', explode(',', str_replace(['[', ']', '"'], '', $schedule->selecteddays)));
+    //         // Convert the selecteddays string to an array after removing quotes and extra spaces
+    //         $selectedDaysArray = array_map('trim', explode(',', str_replace(['[', ']', '"'], '', $schedule->selecteddays)));
 
-//         // Check if the given date falls on a selected day
-//         $givenDateDay = date('l', strtotime($date));
-//         if (!in_array(strtolower($givenDateDay), $selectedDaysArray)) {
-//             return $this->sendError('Schedule not available for the given date.');
-//         }
+    //         // Check if the given date falls on a selected day
+    //         $givenDateDay = date('l', strtotime($date));
+    //         if (!in_array(strtolower($givenDateDay), $selectedDaysArray)) {
+    //             return $this->sendError('Schedule not available for the given date.');
+    //         }
 
-//         // Decode the tokens JSON string
-//         $tokensArray = json_decode($schedule->tokens, true);
+    //         // Decode the tokens JSON string
+    //         $tokensArray = json_decode($schedule->tokens, true);
 
-//         // Transform the tokens array structure
-//         $transformedTokens = array_map(function($token) {
-//             return [
-//                 'Number' => $token['Number'],
-//                 'StartingTime' => $token['Time'],
-//                 'EndingTime' => $token['Tokens'],
-//             ];
-//         }, $tokensArray);
+    //         // Transform the tokens array structure
+    //         $transformedTokens = array_map(function($token) {
+    //             return [
+    //                 'Number' => $token['Number'],
+    //                 'StartingTime' => $token['Time'],
+    //                 'EndingTime' => $token['Tokens'],
+    //             ];
+    //         }, $tokensArray);
 
-//         // Set the transformed tokens array back to the schedule
-//         $schedule->tokens = $transformedTokens;
+    //         // Set the transformed tokens array back to the schedule
+    //         $schedule->tokens = $transformedTokens;
 
-//         // Return the modified response
-//         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
-//     } else {
-//         // Handle the case where the user is not authenticated
-//         return $this->sendError('User not authenticated.', [], 401);
-//     }
-// }
-  // public function show($date)
+    //         // Return the modified response
+    //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
+    //     } else {
+    //         // Handle the case where the user is not authenticated
+    //         return $this->sendError('User not authenticated.', [], 401);
+    //     }
+    // }
+    // public function show($date)
     // {
     //     // Check if the user is authenticated
     //     if (Auth::check()) {
@@ -269,7 +269,7 @@ class ScheduleController extends BaseController
     //         // Handle the case where the user is not authenticated
     //         return $this->sendError('User not authenticated.', [], 40g
 
-    public function show($date)
+    public function show($date, $clinic_id)
     {
         // Check if the user is authenticated
         if (Auth::check()) {
@@ -279,6 +279,7 @@ class ScheduleController extends BaseController
             // Find the schedule for the logged-in user based on the given date
             $schedule = Schedule::where('docter_id', $user->id)
                 ->where('date', '<=', $date)
+                ->where('hospital_Id', '<=', $clinic_id)
                 ->where('scheduleupto', '>=', $date)
                 ->first();
 
@@ -302,6 +303,17 @@ class ScheduleController extends BaseController
             $appointments = TokenBooking::where('doctor_id', $user->id)
                 ->whereDate('date', $date)
                 ->get();
+
+
+            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')
+                ->where('docter_id',  $user->id)
+                ->where('hospital_Id', $clinic_id)
+                ->where('date', $date)
+                ->first();
+
+            if ($today_schedule) {
+                $tokensArray = json_decode($today_schedule->tokens, true);
+            }
 
 
             $transformedTokens = array_map(function ($token) use ($appointments) {

@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 
-    //Specialization
+//Specialization
 Route::get('/specialization', [SpecificationController::class, 'index']);
 Route::get('/specialization/{id}', [SpecificationController::class, 'show']);
 
@@ -72,8 +72,10 @@ Route::post('/specialize', [specializeController::class, 'store']);
 Route::put('/specialize/{id}', [specializeController::class, 'update']);
 Route::delete('/specialize/{id}', [specializeController::class, 'destroy']);
 
+
+
 Route::get('/schedule', [ScheduleController::class, 'index']);
-Route::get('/schedule/{date}', [ScheduleController::class, 'show']);
+Route::get('/schedule/{date}/{clinicId}', [ScheduleController::class, 'show']);
 
 
 Route::post('/schedule', [ScheduleController::class, 'store']);
@@ -85,6 +87,8 @@ Route::post('/banner', [BannerController::class, 'store']);
 
 Route::post('/set-first-image/{id}', [BannerController::class, 'setFirstImage']);
 Route::put('/update-footer/{id}', [BannerController::class, 'updateFooterImages']);
+
+
 
 
 //Medicine
@@ -102,7 +106,7 @@ Route::post('/register', [RegisterController::class, 'register']);
 // User Registration
 Route::post('/Userregister', [UserController::class, 'UserRegister']);
 //  Login
- Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login']);
 
 Route::post('/generate-cards', [TokenGenerationController::class, 'generateTokenCards']);
 
@@ -114,12 +118,14 @@ Route::get('/get-hospital-name/{doctor_id}', [DocterController::class, 'getHospi
 
 Route::post('/approveorreject', [DocterController::class, 'ApproveOrReject']);
 
+
 //login with token
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
-Route::post('/TokenBooking',[TokenBookingController::class, 'bookToken']);
+
+Route::post('/TokenBooking', [TokenBookingController::class, 'bookToken']);
 
 
 Route::get('/getallappointments/{userId}/{date}', [TokenBookingController::class, 'GetallAppointmentOfDocter']);
@@ -129,23 +135,21 @@ Route::get('/getallappointments/{userId}/{date}', [TokenBookingController::class
 Route::get('/getallcompletedappointments/{userId}/{date}', [TokenBookingController::class, 'GetallAppointmentOfDocterCompleted']);
 
 Route::group(['prefix' => 'user'], function () {
-    Route::post('/get_docter_tokens', [DocterController::class, 'getTokens']);
-    Route::get('/userAppoinments/{userId}',[UserController::class,'GetUserAppoinments']);
+    Route::any('/get_docter_tokens', [DocterController::class, 'getTokens']);
+    Route::get('/userAppoinments/{userId}',[UserController::class,'GetUserAppointments']);
+    Route::get('/userCompletedAppoinments/{userId}',[UserController::class,'GetUserCompletedAppoinments']);
 });
-
+//code for add_prescription
 Route::group(['prefix' => 'docter'], function () {
 
-   Route::post('/get_appointment_details', [TokenBookingController::class, 'appointmentDetails']);
-   Route::post('/add_prescription', [TokenBookingController::class, 'addPrescription']);
-   Route::post('/today_token_schedule',[TokenGenerationController::class,'todayTokenSchedule']);
-   Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
+    Route::post('/get_appointment_details', [TokenBookingController::class, 'appointmentDetails']);
+
+    Route::post('/today_token_schedule',[TokenGenerationController::class,'todayTokenSchedule']);
+    Route::post('/add_prescription', [TokenBookingController::class, 'addPrescription']);
+
+    Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
    Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
-
-
 });
 
 
 Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);
-
-
-
