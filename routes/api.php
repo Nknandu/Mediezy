@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BannerController;
 use App\Http\Controllers\API\DocterController;
+use App\Http\Controllers\API\GetTokenController;
 use App\Http\Controllers\API\LoginController;
 use App\Http\Controllers\API\MedicineController;
 use App\Http\Controllers\API\RegisterController;
