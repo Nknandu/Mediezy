@@ -141,15 +141,11 @@ Route::group(['prefix' => 'user'], function () {
 });
 //code for add_prescription
 Route::group(['prefix' => 'docter'], function () {
-
     Route::post('/get_appointment_details', [TokenBookingController::class, 'appointmentDetails']);
-
     Route::post('/today_token_schedule',[TokenGenerationController::class,'todayTokenSchedule']);
     Route::post('/add_prescription', [TokenBookingController::class, 'addPrescription']);
-
+    Route::post('/delete_tokens', [TokenGenerationController::class, 'deleteToken']);
     Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
-   Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
+    Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
 });
-
-
 Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);

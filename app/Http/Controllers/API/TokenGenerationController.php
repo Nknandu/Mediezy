@@ -125,8 +125,8 @@ class TokenGenerationController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $token_booked = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('clinic_id',$request->hospital_id)->first();
-            if($token_booked){
+            $token_booked = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->first();
+            if ($token_booked) {
                 return response()->json(['status' => false, 'message' => 'Already bookings in this date']);
             }
             $doctor  = Docter::where('id', $request->doctor_id)->first();
@@ -218,6 +218,61 @@ class TokenGenerationController extends BaseController
             $schedule->save();
 
             return response()->json(['status' => true, 'message' => 'success']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => "Internal Server Error"]);
+        }
+    }
+
+    public function deleteToken(Request $request)
+    {
+        $rules = [
+            'doctor_id'     => 'required',
+            'hospital_id'   => 'required',
+            'date'          => 'required',
+            'token_numbers' => 'required'
+        ];
+        $messages = [
+            'date.required' => 'Date is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $token_booked = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->first();
+            if ($token_booked) {
+                return response()->json(['status' => false, 'message' => 'Already bookings in this date']);
+            }
+            $request_tokens = json_decode($request->token_numbers);
+            $doctor  = Docter::where('id', $request->doctor_id)->first();
+            if (!$doctor) {
+                return response()->json(['status' => false, 'message' => 'Doctor not found']);
+            }
+            $shedulded_tokens =  schedule::where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
+            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date',$request->date)->first();
+            if($today_schedule){
+                $shedulded_tokens = $today_schedule ;
+            }
+            // Filter the array
+            $checking_token =  json_decode($shedulded_tokens->tokens);
+            $filteredData = array_filter($checking_token, function ($item) use ($request_tokens) {
+                return !in_array($item->Number, $request_tokens);
+            });
+            // Reset the keys if needed
+            $filteredData = array_values($filteredData);
+
+            if ($today_schedule) {
+                $schedule = $today_schedule;
+            } else {
+                $schedule = new TodaySchedule();
+            }
+            $schedule->docter_id = $request->doctor_id;
+            $schedule->hospital_id = $request->hospital_id;
+            $schedule->date = $request->date;
+            $schedule->tokens = json_encode($filteredData);
+            $schedule->save();
+
+            return response()->json(['status' => true, 'message' => 'Successfully Updated']);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => "Internal Server Error"]);
         }
