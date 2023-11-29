@@ -7,6 +7,7 @@ use App\Models\Docter;
 use App\Models\schedule;
 use App\Models\TodaySchedule;
 use App\Models\TodayShedule;
+use App\Models\TokenBooking;
 use Carbon\Carbon;
 
 use DateInterval;
@@ -124,6 +125,10 @@ class TokenGenerationController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
+            $token_booked = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('hospital_id',$request->hospital_id)->first();
+            if($token_booked){
+                return response()->json(['status' => false, 'message' => 'Already bookings in this date']);
+            }
             $doctor  = Docter::where('id', $request->doctor_id)->first();
             if (!$doctor) {
                 return response()->json(['status' => false, 'message' => 'Doctor not found']);
@@ -197,8 +202,6 @@ class TokenGenerationController extends BaseController
                     $timeSlots[] = $slot;
                 }
             }
-
-            //return $timeSlots ;
 
             $checkIfexist = TodaySchedule::where('docter_id', $doctor->id)->whereDate('date', $request->date)->where('hospital_Id', $request->hospital_id)->first();
             if ($checkIfexist) {

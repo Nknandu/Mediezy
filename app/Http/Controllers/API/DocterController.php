@@ -565,6 +565,10 @@ class DocterController extends BaseController
             if (!$docter) {
                 return response()->json(['status' => false, 'message' => 'Doctor not found']);
             }
+            $token_booked = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('hospital_id',$request->hospital_id)->first();
+            if($token_booked){
+                return response()->json(['status' => false, 'message' => 'Already bookings in this date']);
+            }
             $leave = DocterLeave::where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->where('date',$request->date)->first();
             if($leave){
                 DocterLeave::where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->where('date',$request->date)->delete();
