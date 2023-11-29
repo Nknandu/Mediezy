@@ -125,7 +125,7 @@ class TokenGenerationController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $token_booked = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('hospital_id',$request->hospital_id)->first();
+            $token_booked = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('clinic_id',$request->hospital_id)->first();
             if($token_booked){
                 return response()->json(['status' => false, 'message' => 'Already bookings in this date']);
             }
