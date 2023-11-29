@@ -338,7 +338,7 @@ class TokenBookingController extends BaseController
         if ($validation->fails()) {
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
-        try {
+       try {
             $tokenId = $request->token_id;
             $booking = TokenBooking::select('id', 'date', 'TokenTime', 'Appoinmentfor_id', 'whenitstart', 'whenitcomes', 'attachment', 'notes')->where('id', $tokenId)->first();
             if (!$booking) {
@@ -407,12 +407,4 @@ class TokenBookingController extends BaseController
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
         }
     }
-
-
-
-
-
-
-
-
 }

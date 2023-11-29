@@ -42,8 +42,8 @@ class TokenGenerationController extends BaseController
                     'Number' => $counter, // Use the counter for auto-incrementing 'Number'
                     'Time' => $currentTime->format('H:i'),
                     'Tokens' => $currentTime->add($timeInterval)->format('H:i'),
-                    'is_booked'=>0,
-                    'is_cancelled'=>0
+                    'is_booked' => 0,
+                    'is_cancelled' => 0
                 ];
 
                 $counter++; // Increment the counter for the next card
@@ -110,10 +110,10 @@ class TokenGenerationController extends BaseController
             'doctor_id'     => 'required',
             'hospital_id'   => 'required',
             'date'          => 'required',
-            'custome_time'  => 'required|numeric|min:0',
-            'delay_type'    => 'required|in:1,2,3', //1 for late , 2 for earliy
+            'delay_type'    => 'required|in:1,2,3', //2 for late , 1 for earliy
+            'custome_time'  => 'required_if:delay_type,1,2',
             'start_time'    => 'required_if:delay_type,3',
-            'end_time'      => 'required_if:delay_type,3',
+            'end_time'      => 'required_if:delay_type,3|after:start_time',
         ];
         $messages = [
             'date.required' => 'Date is required',
@@ -122,7 +122,7 @@ class TokenGenerationController extends BaseController
         if ($validation->fails()) {
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
-       try {
+        try {
             $doctor  = Docter::where('id', $request->doctor_id)->first();
             if (!$doctor) {
                 return response()->json(['status' => false, 'message' => 'Doctor not found']);
@@ -140,10 +140,10 @@ class TokenGenerationController extends BaseController
             $allowedDaysArray = json_decode($jsonString);
 
             if (!$requestDate->between($startDate, $scheduledUptoDate)) {
-                return response()->json(['status' => true, 'message' => 'Date is this not found in year']);
+                return response()->json(['status' => false, 'message' => 'Date is this not found in year']);
             }
             if (!in_array($dayOfWeek, $allowedDaysArray)) {
-                return response()->json(['status' => true, 'message' => 'Selected day not found on your scheduled days']);
+                return response()->json(['status' => false, 'message' => 'Selected day not found on your scheduled days']);
             }
             // Set the start time and end time
             $startTime = Carbon::parse($schedule->startingTime);
@@ -174,14 +174,14 @@ class TokenGenerationController extends BaseController
                     }
                     $slotEndTime = $startTime->format('h:i');
                     $timeSlots[] = [
-                        "Number"=> $count++,
-                        "No"   => $count++,
+                        "Number" => $count = 0 ? 1 : $count + 1,
                         'Time' => $slotStartTime,
                         'Tokens' => $slotEndTime,
-                        "is_booked"=> 0,
-                        "is_cancelled"=> 0
+                        "is_booked" => 0,
+                        "is_cancelled" => 0
                     ];
                 }
+                $count++;
             } else {
                 // Calculate the number of slots
                 $totalSlots = $startTime->diffInMinutes($endTime) / $schedule->timeduration;
@@ -190,8 +190,8 @@ class TokenGenerationController extends BaseController
                         'Number' => $i,
                         'Time' => $startTime->format('h:i'),
                         'Tokens' => $startTime->addMinutes($schedule->timeduration)->format('h:i'),
-                        "is_booked"=> 0,
-                        "is_cancelled"=> 0
+                        "is_booked" => 0,
+                        "is_cancelled" => 0
                     ];
                     $timeSlots[] = $slot;
                 }
