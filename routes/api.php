@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\AppoinmentsController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BannerController;
 use App\Http\Controllers\API\DocterController;
@@ -16,7 +17,6 @@ use App\Http\Controllers\API\TokenGenerationController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 
 /*
 |--------------------------------------------------------------------------
@@ -136,7 +136,7 @@ Route::get('/getallcompletedappointments/{userId}/{date}', [TokenBookingControll
 
 Route::group(['prefix' => 'user'], function () {
     Route::any('/get_docter_tokens', [DocterController::class, 'getTokens']);
-    Route::get('/userAppoinments/{userId}',[UserController::class,'GetUserAppointments']);
+
     Route::get('/userCompletedAppoinments/{userId}',[UserController::class,'GetUserCompletedAppoinments']);
 });
 //code for add_prescription
@@ -149,3 +149,4 @@ Route::group(['prefix' => 'docter'], function () {
     Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
 });
 Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);
+Route::get('/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);
