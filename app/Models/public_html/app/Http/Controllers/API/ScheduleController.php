@@ -137,7 +137,7 @@ public function show($date)
                             ->first();
 
         if (is_null($schedule)) {
-            return $this->sendError('Schedule not found for the given date.');
+            return $this->sendResponse("schedule", null, '1', 'Schedule not available for the given date.');
         }
 
         // Decode the selecteddays JSON string

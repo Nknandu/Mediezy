@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
+use App\Models\DocterAvailability;
 use App\Models\Patient;
 use App\Models\Symtoms;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -77,6 +77,14 @@ class UserController extends BaseController
     }
 
 
+    private function getClinics($doctorId)
+    {
+        // Replace this with your actual logic to retrieve clinic details from the database
+        // You may use Eloquent queries or another method based on your application structure
+        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'availability']);
+
+        return $clinics;
+    }
 
     public function UserLogin(Request $req)
     {
@@ -101,7 +109,7 @@ class UserController extends BaseController
 
 
 
-    public  function GetUserAppoinments(Request $request, $userId)
+    public function GetUserAppoinments($userId)
     {
         try {
             // Get the currently authenticated doctor
@@ -114,7 +122,6 @@ class UserController extends BaseController
 
             // Validate the date format
             try {
-
             } catch (\Exception $e) {
                 return response()->json(['message' => 'Invalid date format. Use Y-m-d.'], 400);
             }
@@ -122,9 +129,10 @@ class UserController extends BaseController
             // Get all appointments for the doctor on the selected date
             $appointments = Patient::join('token_booking', 'token_booking.BookedPerson_id', '=', 'patient.UserId')
                 ->where('patient.UserId', $doctor->UserId)
-                ->orderByRaw('CAST(token_booking.TokenNumber AS SIGNED) ASC')
+                ->orderBy('token_booking.date', 'ASC')
                 ->where('Is_completed', 0)
                 ->get(['token_booking.*']);
+
 
 
             // Iterate through each appointment and add symptoms information
@@ -143,7 +151,7 @@ class UserController extends BaseController
     }
 
 
-    public  function GetUserCompletedAppoinments(Request $request, $userId)
+    public function GetUserCompletedAppoinments( $userId)
     {
         try {
             // Get the currently authenticated doctor
@@ -156,7 +164,6 @@ class UserController extends BaseController
 
             // Validate the date format
             try {
-
             } catch (\Exception $e) {
                 return response()->json(['message' => 'Invalid date format. Use Y-m-d.'], 400);
             }
