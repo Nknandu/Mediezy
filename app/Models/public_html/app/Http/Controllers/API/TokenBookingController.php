@@ -228,6 +228,7 @@ class TokenBookingController extends BaseController
 
     public function appointmentDetails(Request $request)
     {
+
         $rules = [
             'token_id'   => 'required',
         ];
@@ -238,7 +239,8 @@ class TokenBookingController extends BaseController
         if ($validation->fails()) {
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
-        try {
+        // try {
+            return "changes";
             $tokenId = $request->token_id;
             $booking = TokenBooking::select('id', 'date', 'TokenTime', 'Appoinmentfor_id', 'whenitstart', 'whenitcomes', 'attachment', 'notes')->where('id', $tokenId)->first();
             if (!$booking) {
@@ -249,9 +251,9 @@ class TokenBookingController extends BaseController
             $booking['other_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor2'])->get()->toArray();
             $booking['medicine']       = Medicine::where('token_id', $tokenId)->get();
             return response()->json(['status' => true, 'booking_data' => $booking, 'message' => 'Success']);
-        } catch (\Exception $e) {
-            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        // }
     }
 
     public function addPrescription(Request $request)
@@ -274,7 +276,7 @@ class TokenBookingController extends BaseController
         if ($validation->fails()) {
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
-        try {
+        // try {
             $tokenPrescription  = TokenBooking::where('id', $request->token_id)->first();
 
             if ($request->medicine_name) {
@@ -303,8 +305,8 @@ class TokenBookingController extends BaseController
                 }
             }
             return response()->json(['status' => true, 'message' => 'Medicine added .']);
-        } catch (\Exception $e) {
-            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        // }
     }
 }
