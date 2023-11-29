@@ -248,10 +248,29 @@ class TokenGenerationController extends BaseController
             if (!$doctor) {
                 return response()->json(['status' => false, 'message' => 'Doctor not found']);
             }
+            $schedule = schedule::where('docter_id', $doctor->id)->where('hospital_Id', $request->hospital_id)->first();
+
+            $requestDate = Carbon::parse($request->date);
+            $startDate = Carbon::parse($schedule->date);
+            $scheduledUptoDate = Carbon::parse($schedule->scheduleupto);
+            // Get the day of the week
+            $dayOfWeek = $requestDate->format('l'); // 'l' format gives the full name of the day
+
+            $jsonString = str_replace("'", "\"", $schedule->selecteddays);
+
+            $allowedDaysArray = json_decode($jsonString);
+
+            if (!$requestDate->between($startDate, $scheduledUptoDate)) {
+                return response()->json(['status' => false, 'message' => 'Date is this not found in year']);
+            }
+            if (!in_array($dayOfWeek, $allowedDaysArray)) {
+                return response()->json(['status' => false, 'message' => 'Selected day not found on your scheduled days']);
+            }
             $shedulded_tokens =  schedule::where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
-            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date',$request->date)->first();
-            if($today_schedule){
-                $shedulded_tokens = $today_schedule ;
+
+            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date', $request->date)->first();
+            if ($today_schedule) {
+                $shedulded_tokens = $today_schedule;
             }
             // Filter the array
             $checking_token =  json_decode($shedulded_tokens->tokens);
