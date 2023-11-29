@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
 use App\Models\schedule;
+use App\Models\TokenBooking;
 use Carbon\Carbon;
 use Faker\Core\DateTime;
 use Illuminate\Http\Request;
@@ -266,9 +267,7 @@ class ScheduleController extends BaseController
     //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
     //     } else {
     //         // Handle the case where the user is not authenticated
-    //         return $this->sendError('User not authenticated.', [], 401);
-    //     }
-    // }
+    //         return $this->sendError('User not authenticated.', [], 40g
 
     public function show($date)
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
 use App\Models\Docter;
+use App\Models\DocterAvailability;
 use App\Models\Medicine;
 use App\Models\Symtoms;
 use App\Models\TokenBooking;
