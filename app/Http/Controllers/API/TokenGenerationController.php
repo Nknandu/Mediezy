@@ -198,6 +198,8 @@ class TokenGenerationController extends BaseController
                 }
             }
 
+            //return $timeSlots ;
+
             $checkIfexist = TodaySchedule::where('docter_id', $doctor->id)->whereDate('date', $request->date)->where('hospital_Id', $request->hospital_id)->first();
             if ($checkIfexist) {
                 $schedule = $checkIfexist;

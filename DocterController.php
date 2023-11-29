@@ -493,6 +493,7 @@ class DocterController extends BaseController
             $shedulded_tokens =  schedule::select('id','tokens','date','hospital_Id','startingTime','endingTime')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
             $shedulded_tokens['tokens'] = json_decode($shedulded_tokens->tokens);
 
+
             return response()->json(['status' => true, 'token_data' => $shedulded_tokens]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => "Internal Server Error"]);
