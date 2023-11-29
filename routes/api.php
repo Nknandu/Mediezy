@@ -120,8 +120,21 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::post('/TokenBooking',[TokenBookingController::class, 'bookToken']);
 
+<<<<<<< HEAD
 Route::group(['prefix' => 'user'], function () {
     Route::post('/get_docter_tokens', [DocterController::class, 'getTokens']);
+=======
+
+Route::get('/getallappointments/{userId}/{date}', [TokenBookingController::class, 'GetallAppointmentOfDocter']);
+
+
+
+Route::get('/getallcompletedappointments/{userId}/{date}', [TokenBookingController::class, 'GetallAppointmentOfDocterCompleted']);
+
+Route::group(['prefix' => 'user'], function () {
+    Route::post('/get_docter_tokens', [DocterController::class, 'getTokens']);
+    Route::get('/userAppoinments/{userId}',[UserController::class,'GetUserAppoinments']);
+>>>>>>> 0636965fb64ad62004efc1a5d09df099ee85c7d3
 });
 
 Route::group(['prefix' => 'docter'], function () {
@@ -132,8 +145,17 @@ Route::group(['prefix' => 'docter'], function () {
    Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
    Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
 
+<<<<<<< HEAD
 });
 
 
+=======
+
+});
+
+
+Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);
+
+>>>>>>> 0636965fb64ad62004efc1a5d09df099ee85c7d3
 
 

@@ -5,8 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\API\BaseController;
 use App\Models\Docter;
 use App\Models\schedule;
-use App\Models\TodayShedule;
+use App\Models\TodaySchedule;
 use Carbon\Carbon;
+
 use DateInterval;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -41,12 +42,14 @@ class TokenGenerationController extends BaseController
                     'Number' => $counter, // Use the counter for auto-incrementing 'Number'
                     'Time' => $currentTime->format('H:i'),
                     'Tokens' => $currentTime->add($timeInterval)->format('H:i'),
-                    'is_booked' => 0,
-                    'is_cancelled' => 0
+                    'is_booked'=>0,
+                    'is_cancelled'=>0
                 ];
 
                 $counter++; // Increment the counter for the next card
             }
+
+
             return response()->json(['cards' => $cards], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -92,6 +95,8 @@ class TokenGenerationController extends BaseController
                 ];
             }
         }
+
+
         if (!empty($tokensByClinic)) {
             return $this->sendResponse('todaytokens', $tokensByClinic, '1', 'Today\'s tokens retrieved successfully');
         } else {
@@ -117,7 +122,7 @@ class TokenGenerationController extends BaseController
         if ($validation->fails()) {
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
-        try {
+       try {
             $doctor  = Docter::where('id', $request->doctor_id)->first();
             if (!$doctor) {
                 return response()->json(['status' => false, 'message' => 'Doctor not found']);
@@ -169,9 +174,12 @@ class TokenGenerationController extends BaseController
                     }
                     $slotEndTime = $startTime->format('h:i');
                     $timeSlots[] = [
+                        "Number"=> $count++,
                         "No"   => $count++,
                         'Time' => $slotStartTime,
                         'Tokens' => $slotEndTime,
+                        "is_booked"=> 0,
+                        "is_cancelled"=> 0
                     ];
                 }
             } else {
@@ -179,19 +187,21 @@ class TokenGenerationController extends BaseController
                 $totalSlots = $startTime->diffInMinutes($endTime) / $schedule->timeduration;
                 for ($i = 1; $i <= $totalSlots; $i++) {
                     $slot = [
-                        'No' => $i,
-                        'Time' => $startTime->format('h:i A'),
-                        'Tokens' => $startTime->addMinutes($schedule->timeduration)->format('h:i A')
+                        'Number' => $i,
+                        'Time' => $startTime->format('h:i'),
+                        'Tokens' => $startTime->addMinutes($schedule->timeduration)->format('h:i'),
+                        "is_booked"=> 0,
+                        "is_cancelled"=> 0
                     ];
                     $timeSlots[] = $slot;
                 }
             }
 
-            $checkIfexist = TodayShedule::where('docter_id', $doctor->id)->whereDate('date', $request->date)->where('hospital_Id', $request->hospital_id)->first();
+            $checkIfexist = TodaySchedule::where('docter_id', $doctor->id)->whereDate('date', $request->date)->where('hospital_Id', $request->hospital_id)->first();
             if ($checkIfexist) {
                 $schedule = $checkIfexist;
             } else {
-                $schedule = new TodayShedule();
+                $schedule = new TodaySchedule();
             }
             $schedule->docter_id = $request->doctor_id;
             $schedule->hospital_id = $request->hospital_id;
