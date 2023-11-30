@@ -36,7 +36,7 @@ class AppoinmentsController extends BaseController
             $appointments = Patient::join('token_booking', 'token_booking.BookedPerson_id', '=', 'patient.UserId')
                 ->join('docter', 'docter.UserId', '=', 'token_booking.doctor_id') // Join the doctor table
                 ->where('patient.UserId', $doctor->UserId)
-                ->orderByRaw('CAST(token_booking.TokenNumber AS SIGNED) ASC')
+                ->orderBy('token_booking.date', 'asc')
                 ->where('Is_completed', 0)
                 ->get(['token_booking.*', 'docter.*']);
 

@@ -149,4 +149,4 @@ Route::group(['prefix' => 'docter'], function () {
     Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
 });
 Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);
-Route::get('/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);
+Route::get('/user/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);
