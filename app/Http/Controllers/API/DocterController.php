@@ -382,10 +382,9 @@ class DocterController extends BaseController
     //get the docter by specialization
     public function getDoctorsBySpecialization($specializationId)
     {
-        $specialization = Specialize::findOrFail($specializationId);
-        $doctors = $specialization->doctors;
+        $Doctors = Docter::findOrFail($specializationId);
 
-        return response()->json($doctors);
+        return response()->json($Doctors);
     }
 
 

@@ -9,7 +9,7 @@ class Specialize extends Model
 {
     use HasFactory;
     protected $table='specialize';
-     protected $fillable=['id','specialization'];
+     protected $fillable=['id','specialization','specializeimage'];
 
-    
+
 }

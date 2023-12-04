@@ -45,7 +45,7 @@ Route::get('/login',function (){
     Route::get('/schedulemanager', [ScheduleController::class, 'index'])->name('schedulemanager.index');
     Route::get('/Tokengeneration', [ScheduleController::class, 'create'])->name('Tokengeneration.create');
     Route::get('/banner', [BannerController::class, 'index'])->name('bannerImage.index');
-
+    Route::get('/Docteredit/{userId}', [DocterController::class, 'edit'])->name('Docter.edit');
     Route::controller(FullCalenderController::class)->group(function(){
         Route::get('fullcalender', 'index');
         Route::post('fullcalenderAjax', 'ajax');

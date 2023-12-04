@@ -28,6 +28,6 @@ class Docter extends Model
     'updated_at'];
 
 
-
+  
 }
 

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
+use App\Models\Docter;
 use App\Models\DocterAvailability;
+use App\Models\Favouritestatus;
 use App\Models\Patient;
 use App\Models\Symtoms;
 use App\Models\User;
@@ -183,4 +185,47 @@ class UserController extends BaseController
             return $this->sendError('Error', $e->getMessage(), 500);
         }
 }
+
+
+
+public function favouritestatus(Request $request)
+{
+    $userId = $request->user_id;
+    $docterId = $request->docter_id;
+
+    $docter = Docter::find($docterId);
+
+    if (!$docter) {
+        return response()->json(['error' => 'Doctor not found'], 404);
+    }
+
+    // Check if the user has already added the doctor to favorites
+    $existingFavourite = Favouritestatus::where('UserId', $userId)
+        ->where('doctor_id', $docterId)
+        ->first();
+
+    if ($existingFavourite) {
+        // If the doctor is already in favorites, toggle the status
+        $existingFavourite->favouritestatus = !$existingFavourite->favouritestatus;
+        $existingFavourite->save();
+    } else {
+        // If not, create a new entry in the addfavourites table
+        $addfav = new Favouritestatus();
+        $addfav->UserId = $userId;
+        $addfav->doctor_id = $docterId;
+        $addfav->favouritestatus = true; // Assuming you want to set the initial status to 1
+        $addfav->save();
+    }
+
+    return response()->json(['status' => 'success', 'favouritesstatus' => $existingFavourite ? $existingFavourite->favouritesstatus : true]);
+}
+
+
+public function getallfavourites($id){
+
+$GetallFav=Favouritestatus::where('UserId', $id) ->get();
+return $this->sendResponse('favourites', $GetallFav, '1', 'favourite retrieved successfully.');
+
+}
+
 }

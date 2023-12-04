@@ -28,6 +28,16 @@
         border: 2px solid #ccc;
         border-radius: 50%;
     }
+
+
+
+    .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        cursor: pointer;
+    }
 </style>
 
 <body>
@@ -68,13 +78,22 @@
                         {{ csrf_field() }}
 
                         <div class="row">
+                            <input type="hidden" id="update_id" value="{{ $doctor->UserId }}">
                             <div class="col-xl-6 col-lg-6 col-6">
-                                <label class="mt-2 mb-1 inputlabel">Profile Picture</label><br>
-                                <input type="file" class="form-control mt-1" id="profile_picture" name="staff_image"
-                                    accept="image/*">
+                                {{-- <label class="mt-2 mb-1 inputlabel">Profile Picture</label><br> --}}
+                                {{-- <input type="file" class="form-control mt-1" id="profile_picture" name="staff_image" accept="image/*"> --}}
                             </div>
                             <div class="col-xl-6 col-lg-6 col-6">
-                                <div class="image-preview rounded-circle ml-3" id="imagePreview"></div>
+                                <div class="image-container">
+                                    @if ($doctor->docter_image)
+                                        <!-- Display the existing profile picture -->
+                                        <img src="{{ asset('DocterImages/images/' . $doctor->docter_image) }}" alt="Profile Picture" class="image-preview rounded-circle ml-3" id="imagePreview">
+
+                                    @else
+                                        <!-- Display a placeholder image or a default image -->
+                                        <div class="image-preview rounded-circle ml-3" id="imagePreview"></div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -83,14 +102,14 @@
                                 <label class="mt-1 mb-1 inputlabel formlabel" for="first_name">First Name<span
                                         style="color:red; font-size:15px"> *</span></label>
                                 <input type="text" class="form-control mt-1 inputfield" id="first_name"
-                                    name="FirstName" placeholder="" autofocus required>
+                                    name="FirstName" value="{{$doctor->firstname}}" placeholder="" autofocus required>
                             </div>
 
                             <div class="col-xl-6 col-lg-6 col-12 mb-3">
                                 <label class="mt-1 mb-1 inputlabel formlabel" for="second_name">Last Name<span
                                         style="color:red; font-size:15px"> *</span></label>
                                 <input type="text" class="form-control mt-1 inputfield" id="second_name"
-                                    name="SecondName" placeholder="" autofocus required>
+                                    name="SecondName" value="{{$doctor->lastname}}" placeholder="" autofocus required>
                             </div>
                         </div>
 
@@ -113,9 +132,9 @@
                                 <select class="form-select inputfield" aria-label="Default select example name"
                                     id="gender" name="Gender" autofocus>
                                     <option hidden class="inputlabel" value="0"> Choose Gender</option>
-                                    <option class="inputlabel" value="1"> Male</option>
-                                    <option class="inputlabel" value="2"> Female</option>
-                                    <option class="inputlabel" value="3"> Others</option>
+                                    <option class="inputlabel" value="male"> Male</option>
+                                    <option class="inputlabel" value="female"> Female</option>
+                                    <option class="inputlabel" value="others"> Others</option>
                                 </select>
                             </div>
                         </div>
@@ -151,12 +170,12 @@
                                 <label class="mt-1 mb-1 inputlabel" for="mobile_no">Mobile No<span
                                         style="color:red; font-size:15px"> *</span></label>
                                 <input type="number" class="form-control inputfield" id="mobile_no" name="MobileNo"
-                                    placeholder="" autofocus required>
+                                    placeholder="" value="{{$doctor->mobileNo}}" autofocus required>
                             </div>
                             <div class="col-xl-6 col-lg-6 col-12 mb-3">
                                 <label class="mt-1 mb-1 inputlabel" for="location">Location</label>
                                 <input type="text" class="form-control inputfield" id="location" name="Location"
-                                    placeholder="" autofocus>
+                                    placeholder="" value="{{$doctor->location}}" autofocus>
                             </div>
 
 
@@ -167,13 +186,21 @@
                                 <label class="mt-1 mb-1 inputlabel" for="Email">Email<span
                                         style="color:red; font-size:15px"> *</span></label>
                                 <input type="email" class="form-control inputfield" id="Email" name="email_id"
-                                    placeholder="" autofocus required>
+                                    placeholder=""value="{{$doctor->email}}" autofocus required>
                             </div>
-                            <div class="col-xl-6 col-lg-6 col-12 mb-3">
-                                <label class="mt-1 mb-1 inputlabel" for="password">Password<span
-                                        style="color:red; font-size:15px"> *</span></label>
-                                <input type="password" class="form-control inputfield" id="password"
+
+                            <div class="col-xl-6 col-lg-6 col-12">
+
+                                <label class="mt-2 mb-1 inputlabel">Password<span
+                                        style="color:red; font-size:15px"> *</span></label><br>
+                                <div class="password-input">
+                                    <input type="password" class="form-control mt-1 inputfield" id="password"
                                     name="password" placeholder="" autofocus required>
+                                    <span class="password-toggle"
+                                        onclick="togglePasswordVisibility('password')">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </span>
+                                </div>
                             </div>
 
 
@@ -182,11 +209,10 @@
                         <div class="row">
                             <div class="col-xl-6 col-lg-6 col-12 mb-3">
                                 <label class="mt-1 mb-1 inputlabel" for="enq_source">Sub Subspecification</label>
-                                <select class="inputfield staffselect subspecificationselect multiselect" multiple
-                                    id="show_members" name="subspecailization" required>
+                                <select class="inputfield staffselect subspecificationselect multiselect" multiple id="show_members" name="subspecailization" required>
                                     <option hidden value="">Select Subspecification</option>
                                     @foreach ($subspecification as $key)
-                                        <option class="inputlabel" value="{{ $key->id }}">
+                                        <option class="inputlabel" value="{{ $key->id }}" >
                                             {{ $key->subspecification }}
                                         </option>
                                     @endforeach
@@ -194,8 +220,7 @@
                             </div>
                             <div class="col-xl-6 col-lg-6 col-12 mb-3">
                                 <label class="mt-1 mb-1 inputlabel" for="enq_source">Specification</label>
-                                <select class="inputfield staffselect specificationselect multiselect" multiple
-                                    id="specification" name="specification" autofocus>
+                                <select class="inputfield staffselect specificationselect multiselect" multiple id="specification" name="specification" autofocus>
                                     <option hidden class="inputlabel" value="">Select Specification</option>
                                     @foreach ($Specification as $key)
                                         <option class="inputlabel" value="{{ $key->id }}">
@@ -204,21 +229,20 @@
                                     @endforeach
                                 </select>
                             </div>
-
                         </div>
+
 
                         <div class="row">
                             <div class="col-xl-6 col-lg-6 col-12 mb-3">
                                 <label class="mt-1 mb-1 inputlabel">Services At</label><br>
-                                <textarea cols="30" rows="2" class="form-control inputfield LocalAddress" id="service_at"
-                                    name="services" placeholder="Enter Experience"></textarea>
+                                <textarea cols="30" rows="2" class="form-control inputfield LocalAddress" id="service_at" name="services" placeholder="Enter Experience">{{$doctor->Services_at}}</textarea>
                             </div>
                             <div class="col-xl-6 col-lg-6 col-12 mb-3">
                                 <label class="mt-1 mb-1 inputlabel">About</label><br>
-                                <textarea cols="30" rows="2" class="form-control inputfield LocalAddress" id="about" name="About"
-                                    placeholder="Enter Local Address"></textarea>
+                                <textarea cols="30" rows="2" class="form-control inputfield LocalAddress" id="about" name="About" placeholder="Enter About">{{$doctor->about}}</textarea>
                             </div>
                         </div>
+
 
                         <div class="text-end mt-3">
                             <button type="submit" class="btn responsebtn px-5">Save</button>
@@ -236,6 +260,11 @@
     @include('footer')
 
     <script>
+         function togglePasswordVisibility(inputId) {
+            var inputElement = document.getElementById(inputId);
+            var type = inputElement.getAttribute("type");
+            inputElement.setAttribute("type", type === "password" ? "text" : "password");
+        }
         //image upload preview
         document.getElementById('profile_picture').addEventListener('change', function(event) {
             const fileInput = event.target;
@@ -342,6 +371,7 @@
                 }
             },
             submitHandler: function(form) {
+                var UpdateId = $('#update_id').val();
                 var FirstName = $('#first_name').val();
                 var SecondName = $('#second_name').val();
                 var MobileNumber = $('#mobile_no').val();
@@ -377,7 +407,7 @@
                 }
 
                 $.ajax({
-                    url: "/api/docter",
+                    url: "/api/docter/" + UpdateId + "",
                     method: "POST",
                     timeout: 0,
                     headers: {
@@ -422,6 +452,10 @@
                 });
             }
         });
+
+
+
+
     </script>
 </body>
 

@@ -6,12 +6,14 @@ use App\Http\Controllers\API\BaseController;
 use App\Models\schedule;
 use App\Models\TodaySchedule;
 use App\Models\TokenBooking;
+use App\Models\TokenHistory;
 use Carbon\Carbon;
 use Faker\Core\DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use DateInterval;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ScheduleController extends BaseController
 {
@@ -35,88 +37,119 @@ class ScheduleController extends BaseController
      */
     public function store(Request $request)
     {
-        $input = $request->all();
+        try {
+            $input = $request->all();
 
+            $validator = Validator::make($input, [
+                'docter_id' => ['required', 'max:25'],
+                'session_title' => ['max:250'],
+                'date' => ['required', 'max:25'],
+                'startingTime' => ['max:250'],
+                'endingTime' => ['required', 'max:25'],
+                'TokenCount' => ['max:250'],
+                'timeduration' => ['required', 'max:25'],
+                'format' => ['max:250'],
+            ]);
 
-        $validator = Validator::make($input, [
-            'docter_id' => ['required', 'max:25'],
-            'session_title' => ['max:250'],
-            'date' => ['required', 'max:25'],
-            'startingTime' => ['max:250'],
-            'endingTime' => ['required', 'max:25'],
-            'TokenCount' => ['max:250'],
-            'timeduration' => ['required', 'max:25'],
-            'format' => ['max:250'],
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', $validator->errors());
+            }
 
-        ]);
+            // Use a transaction to ensure atomicity (all-or-nothing)
+            DB::beginTransaction();
 
-        if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors());
+            $existingSchedule = Schedule::where('docter_id', $request->docter_id)
+            ->where('hospital_Id', $request->hospital_Id)
+            ->first();
+
+        // Delete the existing schedule if found
+        if ($existingSchedule) {
+            $existingSchedule->delete();
         }
 
+            $tokens = [];
+            $counter = 1; // Initialize the counter before the loop
 
-        $tokens = [];
-        $counter = 1; // Initialize the counter before the loop
+            $startDateTime = $request->startingTime;
+            $endDateTime = $request->endingTime;
+            $duration = $request->timeduration;
 
+            // Use Carbon to parse input times
+            $startTime = Carbon::createFromFormat('H:i', $startDateTime);
+            $endTime = Carbon::createFromFormat('H:i', $endDateTime);
 
-        $startDateTime = $request->startingTime;
-        $endDateTime = $request->endingTime;
-        $duration = $request->timeduration;
+            // Calculate the time interval based on the duration
+            $timeInterval = new DateInterval('PT' . $duration . 'M');
 
-        // Use Carbon to parse input times
-        $startTime = Carbon::createFromFormat('H:i', $startDateTime);
-        $endTime = Carbon::createFromFormat('H:i', $endDateTime);
+            // Generate tokens at regular intervals
+            $currentTime = $startTime;
 
-        // Calculate the time interval based on the duration
-        $timeInterval = new DateInterval('PT' . $duration . 'M');
+            while ($currentTime <= $endTime) {
+                $tokens[] = [
+                    'Number' => $counter, // Use the counter for auto-incrementing 'Number'
+                    'Time' => $currentTime->format('H:i'),
+                    'Tokens' => $currentTime->add($timeInterval)->format('H:i')
+                ];
 
-        // Generate tokens at regular intervals
-        $currentTime = $startTime;
+                $counter++; // Increment the counter for the next card
+            }
 
-        while ($currentTime <= $endTime) {
-            $tokens[] = [
-                'Number' => $counter, // Use the counter for auto-incrementing 'Number'
-                'Time' => $currentTime->format('H:i'),
-                'Tokens' => $currentTime->add($timeInterval)->format('H:i')
-            ];
+            $inputDate = Carbon::parse($request->date);
+            $oneYearLater = $inputDate->addYear();
+            $oneYearLaterString = $oneYearLater->toDateString();
 
-            $counter++; // Increment the counter for the next card
+            $tokensJson = json_encode($tokens);
+            $selectdays = json_encode($request->selecteddays);
+
+            // Create a new schedule record
+            $schedule = new Schedule;
+            $schedule->docter_id = $request->docter_id;
+            $schedule->session_title = $request->session_title;
+            $schedule->date = $request->date;
+            $schedule->startingTime = $request->startingTime;
+            $schedule->endingTime = $request->endingTime;
+            $schedule->TokenCount = $request->TokenCount;
+            $schedule->timeduration = $request->timeduration;
+            $schedule->format = $request->format;
+            $schedule->scheduleupto = $oneYearLaterString;
+            $schedule->selecteddays = $selectdays;
+            $schedule->tokens = $tokensJson;
+            $schedule->hospital_Id = $request->hospital_Id;
+
+            // Save the schedule record
+            $schedule->save();
+
+            // Create a new token_history record
+            $tokenHistory = new TokenHistory();
+            $tokenHistory->docter_id = $request->docter_id;
+            $tokenHistory->session_title = $request->session_title;
+            $tokenHistory->TokenUpdateddate = $request->date;
+            $tokenHistory->startingTime = $request->startingTime;
+            $tokenHistory->endingTime = $request->endingTime;
+            $tokenHistory->TokenCount = $request->TokenCount;
+            $tokenHistory->timeduration = $request->timeduration;
+            $tokenHistory->format = $request->format;
+            $tokenHistory->scheduleupto = $oneYearLaterString;
+            $tokenHistory->selecteddays = $selectdays;
+            $tokenHistory->tokens = $tokensJson;
+            $tokenHistory->hospital_Id = $request->hospital_Id;
+
+            // Save the token_history record
+            $tokenHistory->save();
+
+            // Commit the transaction
+            DB::commit();
+
+            return $this->sendResponse("schedulemanager", $schedule, '1', 'Schedule Manager created successfully');
+        } catch (\Exception $e) {
+            // Rollback the transaction in case of an error
+            DB::rollback();
+
+            // Handle the exception
+            return $this->sendError('Error', $e->getMessage(), 500);
         }
-
-        $inputDate = Carbon::parse($request->date);
-
-        $oneYearLater = $inputDate->addYear();
-
-
-        $oneYearLaterString = $oneYearLater->toDateString();
-
-        $tokensJson = json_encode($request->tokens);
-        $selectdays = json_encode($request->selecteddays);
-
-
-
-
-        // Create a new schedule record
-        $schedule = new Schedule;
-        $schedule->docter_id = $request->docter_id;
-        $schedule->session_title = $request->session_title;
-        $schedule->date = $request->date;
-        $schedule->startingTime = $request->startingTime;
-        $schedule->endingTime = $request->endingTime;
-        $schedule->TokenCount = $request->TokenCount;
-        $schedule->timeduration = $request->timeduration;
-        $schedule->format = $request->format;
-        $schedule->scheduleupto = $oneYearLaterString;
-        $schedule->selecteddays = $selectdays;
-        $schedule->tokens = $tokensJson;
-        $schedule->hospital_Id = $request->hospital_Id;
-
-
-        // Save the schedule record
-        $schedule->save();
-
-        return $this->sendResponse("schedulemanager", $schedule, '1', 'Schedule Manager created successfully');
     }
+
 
 
     /**

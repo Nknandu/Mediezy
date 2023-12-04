@@ -61,7 +61,7 @@ Route::put('/docter/{userId}', [DocterController::class, 'update']);
 Route::delete('/docter/{id}', [DocterController::class, 'destroy']);
 
 Route::get('/symptoms/{specializationId}', [DocterController::class, 'getSymptomsBySpecialization']);
-
+Route::get('/docter/docterByspecialization/{id}', [DocterController::class, 'getDoctorsBySpecialization']);
 
 //specialize
 Route::get('/specialize', [specializeController::class, 'index']);
@@ -138,7 +138,10 @@ Route::group(['prefix' => 'user'], function () {
     Route::any('/get_docter_tokens', [DocterController::class, 'getTokens']);
 
     Route::get('/userCompletedAppoinments/{userId}',[UserController::class,'GetUserCompletedAppoinments']);
+    Route::post('/addtofavourites',[UserController::class,'favouritestatus']);
+    Route::get('/getallfavourites/{id}',[UserController::class,'getallfavourites']);
 });
+
 //code for add_prescription
 Route::group(['prefix' => 'docter'], function () {
     Route::post('/get_appointment_details', [TokenBookingController::class, 'appointmentDetails']);
@@ -148,5 +151,9 @@ Route::group(['prefix' => 'docter'], function () {
     Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
     Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
 });
+
+Route::group(['prefix' => 'Tokens'], function () {
 Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);
+Route::get('/getcurrentTokens', [GetTokenController::class, 'getCurrentDateTokens']);
+});
 Route::get('/user/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);

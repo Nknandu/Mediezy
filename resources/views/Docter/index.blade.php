@@ -212,109 +212,11 @@ columns: [
 ]
 
             });
-            $("#enquiry_type").validate({
-                rules: {
-                    EnquiryName: {
-                        required: true,
-                        minlength: 2,
-                        maxlength: 35,
-                    }
-                },
-                messages: {
-                    EnquiryName: {
-                        required: "This field is required",
-                        minlength: "At least 2 characters",
-                        maxlength: "Maximum 35 characters",
-                    }
-                },
-                submitHandler: function(form) {
-                    var specialization = $('#enquiry_name').val();
-                    var Remark = $('#remarks').val();
-                    $.ajax({
-                        url: "/api/specialization",
-                        method: "POST",
-                        timeout: 0,
-                        headers: {
-                            "Accept": "application/json",
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        data: {
-                            specialization: specialization,
-                            remark: Remark,
-                        },
-                        beforeSend: function() {
-                            $('.loader').show();
-                            $('#EnquiryModal').modal('hide');
-                            $('.mainContents').hide();
-                            $('#ResponseImage').html("");
-                            $('#ResponseText').text("");
-                        },
-                    }).done(function(response) {
-                        $('.mainContents').show();
-                        $('.loader').hide();
-                        MasterTable.ajax.reload();
-                        console.log(response);
-                        console.log(response.message);
-                        var EnResult = JSON.stringify(response);
-                        console.log(EnResult);
-                        var EnResultObj = JSON.parse(EnResult);
-                        if (EnResultObj.success == true) {
-                            if (EnResultObj.code == "0") {
-
-                                swal("Warning", response.message, "warning");
-                            } else if (EnResultObj.code == "1") {
-
-                                swal("Success", response.message, "success");
-                            } else if (EnResultObj.code == "2") {
-
-                                swal("Error", response.message, "error");
-                            }
-                        } else {
-                            // Error icon
-                            swal("Some Error Occurred!!!", "Please Try Again", "error");
-                        }
-                    });
-                }
-            });
 
 
 
             //edit Specialization
-            $('#MasterTable').on('click', '.btn_edit', function() {
-                var EditSpecialization = $(this).val();
-                console.log(EditSpecialization);
-
-                var settings = {
-                    "url": "/api/specialization/" + EditSpecialization + "",
-                    "method": "GET",
-                    "timeout": 0,
-                };
-
-                $.ajax(settings).done(function(response) {
-                    console.log(response);
-                    var SpecializationResult = JSON.stringify(response);
-                    console.log(SpecializationResult);
-                    var Specializationedit = JSON.parse(SpecializationResult);
-                    if (Specializationedit.success == true) {
-                        $('#EnquiryModal').modal('show');
-                        $('#enquiry_type').hide();
-                        $('#update_enquiry').show();
-                        var CoTypeDataArray = Specializationedit.specialization;
-                        for (const key in CoTypeDataArray) {
-                            var SpecializationName = CoTypeDataArray['specialization'];
-                            var SpecializationRemark = CoTypeDataArray['remark'];
-                            var SpecializationId = CoTypeDataArray['id'];
-
-                        }
-                        $("#update_enquiry_id").val(SpecializationId);
-                        $("#update_enquiry_name").val(SpecializationName);
-                        $("#update_remarks").val(SpecializationRemark);
-                    }
-                });
-
-
-
-            });
+          
 
 
 
