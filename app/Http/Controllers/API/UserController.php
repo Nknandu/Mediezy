@@ -6,13 +6,19 @@ use App\Http\Controllers\API\BaseController;
 use App\Models\Docter;
 use App\Models\DocterAvailability;
 use App\Models\Favouritestatus;
+use App\Models\LabReport;
 use App\Models\Patient;
+use App\Models\PatientDocument;
+use App\Models\PatientPrescriptions;
 use App\Models\Symtoms;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use League\CommonMark\Node\Block\Document;
 
 class UserController extends BaseController
 {
@@ -184,48 +190,184 @@ class UserController extends BaseController
             // Handle unexpected errors
             return $this->sendError('Error', $e->getMessage(), 500);
         }
-}
-
-
-
-public function favouritestatus(Request $request)
-{
-    $userId = $request->user_id;
-    $docterId = $request->docter_id;
-
-    $docter = Docter::find($docterId);
-
-    if (!$docter) {
-        return response()->json(['error' => 'Doctor not found'], 404);
     }
 
-    // Check if the user has already added the doctor to favorites
-    $existingFavourite = Favouritestatus::where('UserId', $userId)
-        ->where('doctor_id', $docterId)
-        ->first();
 
-    if ($existingFavourite) {
-        // If the doctor is already in favorites, toggle the status
-        $existingFavourite->favouritestatus = !$existingFavourite->favouritestatus;
-        $existingFavourite->save();
-    } else {
-        // If not, create a new entry in the addfavourites table
-        $addfav = new Favouritestatus();
-        $addfav->UserId = $userId;
-        $addfav->doctor_id = $docterId;
-        $addfav->favouritestatus = true; // Assuming you want to set the initial status to 1
-        $addfav->save();
+
+    public function favouritestatus(Request $request)
+    {
+        $userId = $request->user_id;
+        $docterId = $request->docter_id;
+
+        $docter = Docter::find($docterId);
+
+        if (!$docter) {
+            return response()->json(['error' => 'Doctor not found'], 404);
+        }
+
+        // Check if the user has already added the doctor to favorites
+        $existingFavourite = Favouritestatus::where('UserId', $userId)
+            ->where('doctor_id', $docterId)
+            ->first();
+
+        if ($existingFavourite) {
+            // If the doctor is already in favorites, toggle the status
+            $existingFavourite->favouritestatus = !$existingFavourite->favouritestatus;
+            $existingFavourite->save();
+        } else {
+            // If not, create a new entry in the addfavourites table
+            $addfav = new Favouritestatus();
+            $addfav->UserId = $userId;
+            $addfav->doctor_id = $docterId;
+            $addfav->favouritestatus = true; // Assuming you want to set the initial status to 1
+            $addfav->save();
+        }
+
+        return response()->json(['status' => 'success', 'favouritesstatus' => $existingFavourite ? $existingFavourite->favouritesstatus : true]);
     }
 
-    return response()->json(['status' => 'success', 'favouritesstatus' => $existingFavourite ? $existingFavourite->favouritesstatus : true]);
-}
 
+    public function getallfavourites($id)
+    {
 
-public function getallfavourites($id){
+        $GetallFav = Favouritestatus::where('UserId', $id)->get();
+        return $this->sendResponse('favourites', $GetallFav, '1', 'favourite retrieved successfully.');
+    }
+    public function uploadDocument(Request $request)
+    {
+        $rules = [
+            'user_id'     => 'required',
+            'document'    => 'required|mimes:doc,docx,pdf,jpeg,png,jpg|max:2048'
+        ];
+        $messages = [
+            'document.required' => 'Document is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $patient_doc = new PatientDocument();
+            $patient_doc->user_id = $request->user_id;
+            if ($request->hasFile('document')) {
+                $imageFile = $request->file('document');
+                if ($imageFile->isValid()) {
+                    $imageName = $imageFile->getClientOriginalName();
+                    $imageFile->move(public_path('user/documents'), $imageName);
+                    $patient_doc->document = $imageName;
+                }
+            }
+            $patient_doc->save();
+            return response()->json(['status' => true, 'response' => "File Added"]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
 
-$GetallFav=Favouritestatus::where('UserId', $id) ->get();
-return $this->sendResponse('favourites', $GetallFav, '1', 'favourite retrieved successfully.');
+    public function updateDocument(Request $request)
+    {
+        $rules = [
+            'user_id'        => 'required',
+            'document_id'    => 'required',
+            'type'           => 'required|in:1,2',
+            'test_name'      => 'required_if:type,1',
+            'lab_name'       => 'required_if:type,1',
+            'doctor_name'    => 'required_if:type,1,2',
+            'date'           => 'required_if:type,1,2',
+        ];
+        $messages = [
+            'document_id.required' => 'DocumentId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            DB::beginTransaction();
+            $document = PatientDocument::where('user_id', $request->user_id)->where('id', $request->document_id)->first();
+            if (!$document) {
+                return response()->json(['status' => false, 'message' => 'Document not found']);
+            }
+            $this->updateDocumentType($request, $document);
+            DB::commit();
+            return response()->json(['status' => true, 'response' => "File Updated"]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
 
-}
+    private function updateDocumentType(Request $request, PatientDocument $document)
+    {
+        $type = $request->type;
 
+        if ($type == '1' || $type == '2') {
+            $model = ($type == '1') ? LabReport::class : PatientPrescriptions::class;
+            $record = $model::where('user_id', $request->user_id)->where('document_id', $request->document_id)->first();
+
+            if (!$record) {
+                $record = new $model();
+            }
+            $record->user_id = $request->user_id;
+            $record->document_id = $request->document_id;
+            $record->date = $request->date;
+            $record->doctor_name = $request->doctor_name;
+
+            if ($request->notes) {
+                $record->notes = $request->notes;
+            }
+
+            if ($request->file_name) {
+                $this->updateDocumentFile($request, $document, $record);
+            }
+            $record->save();
+            $document->status = 1 ;
+            $document->type = $type;
+            $document->save();
+        }
+    }
+
+    private function updateDocumentFile(Request $request, PatientDocument $document, $record)
+    {
+        $oldFilePath = public_path('user/documents/' . $document->document);
+
+        if (!File::exists($oldFilePath)) {
+            return response()->json(['status' => false, 'response' => 'File not found']);
+        }
+
+        $newFileName = $request->file_name;
+        $newFileNameWithExtension = $newFileName . '.' . pathinfo($oldFilePath, PATHINFO_EXTENSION);
+        $newFilePath = public_path('user/documents/' . $newFileNameWithExtension);
+
+        // Move the file to the new name
+        File::move($oldFilePath, $newFilePath);
+
+        // Update the file name in the database
+        $record->file_name = $newFileName;
+        $document->document = $newFileNameWithExtension;
+        $document->save();
+    }
+
+    public function getUploadedDocuments(Request $request)
+    {
+        $rules = [
+            'user_id'     => 'required',
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id)->get();
+            if (!$patient_doc) {
+                $patient_doc = null;
+            }
+            return response()->json(['status' => true, 'document_data' => $patient_doc]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
 }
