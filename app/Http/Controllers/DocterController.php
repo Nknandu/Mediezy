@@ -39,14 +39,14 @@ class DocterController extends Controller
                          return $StatusBtn;
                 })
                 ->addColumn('action', function ($row) {
-                    $actionBtn = '<div class="text-center actions text-nowrap">
-                        <button class="edit btn btn_edit me-2" value="' . $row["UserId"] . '" title="Edit">
-                            <i class="ri-pencil-line"></i>
-                        </button>
-                        <button class="delete btn btn_delete" value="' . $row["UserId"] . '" title="Delete">
-                            <i class="ri-delete-bin-6-line"></i>
-                        </button>
-                    </div>';
+                    $actionBtn = "<div class='text-center actions text-nowrap'>
+                <a class='edit btn update_hover me-2' href='Docteredit/" . $row["UserId"] . "' title='Edit'>
+                  <i class='ri-pencil-line'></i>
+                </a>
+                <button class='delete btn btn_delete' value='" . $row["UserId"] . "' title='Delete'>
+                  <i class='ri-delete-bin-6-line'></i>
+                </button>
+              </div>";
                     return $actionBtn;
                 })
                 ->rawColumns(['action', 'approve_status'])
@@ -67,4 +67,19 @@ class DocterController extends Controller
     $data=array_merge($ListSpecification,$ListSubspecification,$ListSpecialization);
     return view('Docter.create',$data);
    }
+
+
+   public function edit(Request $request, $userId)
+   {
+    $ListSpecification['Specification']=Specification::all();
+    $ListSubspecification['subspecification']=Subspecification::all();
+    $ListSpecialization['specialization']=Specialize::all();
+    $data=array_merge($ListSpecification,$ListSubspecification,$ListSpecialization);
+       // Fetch the Docter object
+       $doctor = Docter::where('userId', $userId)->first();
+
+       // Use an associative array to pass multiple variables to the view
+       return view('Docter.edit', compact('doctor'),$data);
+   }
+
 }

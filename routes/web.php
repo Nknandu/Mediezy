@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocterController;
 use App\Http\Controllers\FullCalenderController;
@@ -45,16 +46,16 @@ Route::get('/login',function (){
     Route::get('/schedulemanager', [ScheduleController::class, 'index'])->name('schedulemanager.index');
     Route::get('/Tokengeneration', [ScheduleController::class, 'create'])->name('Tokengeneration.create');
     Route::get('/banner', [BannerController::class, 'index'])->name('bannerImage.index');
-
+    Route::get('/Docteredit/{userId}', [DocterController::class, 'edit'])->name('Docter.edit');
     Route::controller(FullCalenderController::class)->group(function(){
         Route::get('fullcalender', 'index');
         Route::post('fullcalenderAjax', 'ajax');
     });
 
-    Route::get('/medicine',[MedicineController::class, 'index'])->name('medicine.index');
 
+    Route::get('/categories', [CategoriesController::class, 'index'])->name('Categories.index');
 
-    Route::get('/showToken',function () {
+    Route::get('/showTokencategories',function () {
         return view('ShowTokens');
 });
 

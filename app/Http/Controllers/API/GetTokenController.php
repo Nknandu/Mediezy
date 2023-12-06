@@ -13,10 +13,39 @@ use Illuminate\Support\Facades\DB;
 class GetTokenController extends BaseController
 {
 
-    public function getTokensForCheckInAndComplete(Request $request) {
+
+    public function getCurrentDateTokens()
+    {
+        // Get the current date
+        $currentDate = now()->toDateString();
+
+        // Retrieve tokens for the current date using Eloquent
+        $tokens = TokenBooking::whereDate('date', $currentDate)
+        ->orderByRaw('CAST(token_booking.TokenNumber AS SIGNED) ASC')->get();
+
+        if ($tokens->isEmpty()) {
+            // No tokens found for the current date
+            return response()->json(['message' => 'No tokens available for the current date.', 'tokens' => null], 200);
+        }
+
+        $filteredTokens = $tokens->map(function ($token) {
+            return [
+                'id' => $token->id,
+                'TokenNumber' => $token->TokenNumber,
+                'TokenTime' => $token->TokenTime,
+            ];
+        });
+
+        // Return the tokens as JSON
+        return response()->json(['message' => 'Currendate Tokens retrieved successfully.', 'tokens' => $filteredTokens], 200);
+    }
+
+
+    public function getTokensForCheckInAndComplete(Request $request)
+    {
         $rules = [
-            'userId'=>'required',
-            'TokenNumber'=>'required',
+            'userId' => 'required',
+            'TokenNumber' => 'required',
             'Is_checkIn' => 'sometimes',
             'Is_completed' => 'sometimes',
         ];
@@ -30,15 +59,15 @@ class GetTokenController extends BaseController
         try {
             // Get current date
             $currentDate = Carbon::now()->toDateString();
-            $userId=$request->userId;
-            $tokenNumber=$request->TokenNumber;
+            $userId = $request->userId;
+            $tokenNumber = $request->TokenNumber;
 
             // Fetch appointments for the current date
             $appointments = DB::table('token_booking')
-            ->whereDate('date', $currentDate)
-            ->where('doctor_id', $userId)
-            ->where('TokenNumber', $tokenNumber)
-            ->get();
+                ->whereDate('date', $currentDate)
+                ->where('doctor_id', $userId)
+                ->where('TokenNumber', $tokenNumber)
+                ->get();
             if ($appointments->isEmpty()) {
                 return response()->json(['message' => 'No appointments for the current date.'], 200);
             }
@@ -50,10 +79,12 @@ class GetTokenController extends BaseController
 
                 if ($request->Is_checkIn) {
                     $tokenBooking->Is_checkIn = $request->Is_checkIn;
+                    $tokenBooking->checkinTime = now();
                 }
 
                 if ($request->Is_completed) {
                     $tokenBooking->Is_completed = $request->Is_completed;
+                    $tokenBooking->checkoutTime = now();
                 }
 
                 $tokenBooking->save();
@@ -61,8 +92,8 @@ class GetTokenController extends BaseController
                 // Add the updated token details to the response
                 $updatedTokens[] = $tokenBooking;
                 $symptoms = json_decode($tokenBooking->Appoinmentfor_id, true);
-            $tokenBooking['main_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor1'])->get()->toArray();
-            $tokenBooking['other_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor2'])->get()->toArray();
+                $tokenBooking['main_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor1'])->get()->toArray();
+                $tokenBooking['other_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor2'])->get()->toArray();
             }
 
             return response()->json(['message' => 'Check-in and/or completion status updated successfully.', 'tokens' => $updatedTokens], 200);
@@ -70,7 +101,4 @@ class GetTokenController extends BaseController
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
-
-
-
 }

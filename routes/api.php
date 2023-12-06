@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AppoinmentsController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BannerController;
+use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\DocterController;
 use App\Http\Controllers\API\GetTokenController;
 use App\Http\Controllers\API\LoginController;
@@ -50,9 +51,11 @@ Route::put('/subspecialization/{id}', [SubspecificationController::class, 'updat
 Route::delete('/subspecialization/{id}', [SubspecificationController::class, 'destroy']);
 
 
-
+Route::group(['middleware' => 'auth:api'], function () {
+    Route::get('/docter', [DocterController::class, 'index']);
+});
 //Docter
-Route::get('/docter', [DocterController::class, 'index']);
+Route::get('/getalldocters', [DocterController::class, 'getallDocters']);
 Route::get('/docter/{userId}', [DocterController::class, 'show']);
 
 
@@ -61,7 +64,7 @@ Route::put('/docter/{userId}', [DocterController::class, 'update']);
 Route::delete('/docter/{id}', [DocterController::class, 'destroy']);
 
 Route::get('/symptoms/{specializationId}', [DocterController::class, 'getSymptomsBySpecialization']);
-
+Route::get('/docter/docterByspecialization/{id}', [DocterController::class, 'getDoctorsBySpecialization']);
 
 //specialize
 Route::get('/specialize', [specializeController::class, 'index']);
@@ -105,6 +108,8 @@ Route::delete('/Medicine/{id}', [MedicineController::class, 'destroy']);
 Route::post('/register', [RegisterController::class, 'register']);
 // User Registration
 Route::post('/Userregister', [UserController::class, 'UserRegister']);
+Route::get('/Useredit/{userId}', [UserController::class, 'UserEdit']);
+Route::put('/Userupdate/{userId}', [UserController::class, 'updateUserDetails']);
 //  Login
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -138,7 +143,10 @@ Route::group(['prefix' => 'user'], function () {
     Route::any('/get_docter_tokens', [DocterController::class, 'getTokens']);
 
     Route::get('/userCompletedAppoinments/{userId}',[UserController::class,'GetUserCompletedAppoinments']);
+    Route::post('/addtofavourites',[UserController::class,'favouritestatus']);
+    Route::get('/getallfavourites/{id}',[UserController::class,'getallfavourites']);
 });
+
 //code for add_prescription
 Route::group(['prefix' => 'docter'], function () {
     Route::post('/get_appointment_details', [TokenBookingController::class, 'appointmentDetails']);
@@ -147,6 +155,18 @@ Route::group(['prefix' => 'docter'], function () {
     Route::post('/delete_tokens', [TokenGenerationController::class, 'deleteToken']);
     Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
     Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
+
 });
+
+Route::group(['prefix' => 'Tokens'], function () {
 Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckInAndComplete']);
-Route::get('/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);
+Route::get('/getcurrentTokens', [GetTokenController::class, 'getCurrentDateTokens']);
+});
+Route::get('/user/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);
+
+//Workfrom athira
+Route::get('/Showcategories', [CategoriesController::class, 'index']);
+Route::get('/ShowCategoriesdocter/{id}', [CategoriesController::class, 'show']);
+
+Route::post('/Categories', [CategoriesController::class, 'store']);
+Route::get('/searchdoctor', [DocterController::class, 'searchDoctor']);

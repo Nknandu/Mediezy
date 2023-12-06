@@ -13,10 +13,18 @@ return new class extends Migration
     {
         Schema::create('token_history', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('docter_id')->nullable();
-            $table->date('date')->nullable();
+            $table->bigInteger('docter_id')->default(0);
+            $table->string('session_title')->nullable();
+            $table->date('TokenUpdateddate')->nullable();
+            $table->bigInteger('hospital_Id')->default(0);
+            $table->string('startingTime')->nullable();
+            $table->string('endingTime')->nullable();
+            $table->string('TokenCount')->nullable();
+            $table->string('timeduration')->nullable();
+            $table->string('format')->nullable();
             $table->longText('tokens')->nullable();
-            $table->timestamps();
+            $table->string('scheduleupto')->nullable();
+            $table->text('selecteddays')->nullable();
         });
     }
 

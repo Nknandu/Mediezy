@@ -35,9 +35,14 @@
 
                     </div>
                     <div class="modal-body">
-                        <form class="Enquiry AddForm" id="enquiry_type" novalidate>
+                        <form class="Enquiry AddForm" id="enquiry_type" novalidate enctype="multipart/form-data">
                             {{ csrf_field() }}
                             <div class="row">
+                                <div class=" col-12">
+                                    <label class="mt-2 mb-1 inputlabel"> Image</label><br>
+                                    <input type="file" class="form-control mt-1" id="specialization_image"
+                                        name="specialization_image" accept="image/*">
+                                </div>
                                 <div class=" col-12">
                                     <label class="mt-2 mb-1 inputlabel">Name<span style="color:red; font-size:15px">
                                             *</span></label><br>
@@ -281,6 +286,10 @@
                         required: true,
                         minlength: 2,
                         maxlength: 35,
+                    },
+                    specialization_image: {
+                        required: true,
+                        // Add any additional rules for file upload if needed
                     }
                 },
                 messages: {
@@ -288,26 +297,30 @@
                         required: "This field is required",
                         minlength: "At least 2 characters",
                         maxlength: "Maximum 35 characters",
+                    },
+                    specialization_image: {
+                        required: "Please select an image",
                     }
                 },
-                submitHandler: function(form,event) {
+                submitHandler: function(form, event) {
                     event.preventDefault();
                     var specialization = $('#enquiry_name').val();
-                    var Remark = $('#remarks').val();
-                    let symtomsData = JSON.stringify(symptomsArray);
+                    var symtomsData = JSON.stringify(symptomsArray);
+
+                    // Create FormData object to handle file upload
+                    var formData = new FormData(form);
+                    formData.append('EnquiryName', specialization);
+                formData.append('symtomslist', JSON.stringify(symptomsArray));
+                var profilePictureInput = $("#specialization_image")[0];
+                if (profilePictureInput.files.length > 0) {
+                    formData.append('specialization_image', profilePictureInput.files[0]);
+                }
                     $.ajax({
                         url: "/api/specialize",
                         method: "POST",
-                        timeout: 0,
-                        headers: {
-                            "Accept": "application/json",
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        data: {
-                            specialization: specialization,
-                            symtomsData: symtomsData,
-
-                        },
+                        processData: false, // Prevents jQuery from automatically transforming the data
+                        contentType: false, // Prevents jQuery from automatically setting the content type
+                        data: formData,
                         beforeSend: function() {
                             $('.loader').show();
                             $('#EnquiryModal').modal('hide');
@@ -326,13 +339,10 @@
                         var EnResultObj = JSON.parse(EnResult);
                         if (EnResultObj.success == true) {
                             if (EnResultObj.code == "0") {
-
                                 swal("Warning", response.message, "warning");
                             } else if (EnResultObj.code == "1") {
-
                                 swal("Success", response.message, "success");
                             } else if (EnResultObj.code == "2") {
-
                                 swal("Error", response.message, "error");
                             }
                         } else {
@@ -342,6 +352,7 @@
                     });
                 }
             });
+
 
 
 
