@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BannerController;
+use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocterController;
 use App\Http\Controllers\FullCalenderController;
@@ -51,10 +52,10 @@ Route::get('/login',function (){
         Route::post('fullcalenderAjax', 'ajax');
     });
 
-    Route::get('/medicine',[MedicineController::class, 'index'])->name('medicine.index');
 
+    Route::get('/categories', [CategoriesController::class, 'index'])->name('Categories.index');
 
-    Route::get('/showToken',function () {
+    Route::get('/showTokencategories',function () {
         return view('ShowTokens');
 });
 

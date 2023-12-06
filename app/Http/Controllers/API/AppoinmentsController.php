@@ -183,12 +183,6 @@ class AppoinmentsController extends BaseController
                 if ($key > 0) {
                     $previousAppointment = TokenBooking::find($appointments[$key - 1]->id);
 
-                    // Update Is_completed flag and checkoutTime for the previous appointment
-                    $previousAppointment->Is_completed = 1;
-                    $previousAppointment->checkoutTime = Carbon::now()->toDateTimeString(); // Set checkoutTime to current time
-                    $previousAppointment->save(); // Save the changes to the database
-
-                    // Set the estimate time for the current appointment to the checkout time of the previous appointment
                     $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->format('g:i');
 
                 }

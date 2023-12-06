@@ -211,57 +211,24 @@ class UserController extends BaseController
             ->first();
 
         if ($existingFavourite) {
-            // If the doctor is already in favorites, toggle the status
-            $existingFavourite->favouritestatus = !$existingFavourite->favouritestatus;
-            $existingFavourite->save();
+            Favouritestatus::where('doctor_id', $docterId)->where('UserId', $userId)->delete();
+            return response()->json(['status' => true, 'message' => 'favourite Removed successfully .']);
         } else {
             // If not, create a new entry in the addfavourites table
             $addfav = new Favouritestatus();
             $addfav->UserId = $userId;
             $addfav->doctor_id = $docterId;
-            $addfav->favouritestatus = true; // Assuming you want to set the initial status to 1
             $addfav->save();
         }
 
-        return response()->json(['status' => 'success', 'favouritesstatus' => $existingFavourite ? $existingFavourite->favouritesstatus : true]);
+        return response()->json(['status' => true, 'message' => 'favourite added successfully .']);
     }
 
 
     public function getallfavourites($id)
     {
-
         $GetallFav = Favouritestatus::where('UserId', $id)->get();
         return $this->sendResponse('favourites', $GetallFav, '1', 'favourite retrieved successfully.');
-    }
-    public function uploadDocument(Request $request)
-    {
-        $rules = [
-            'user_id'     => 'required',
-            'document'    => 'required|mimes:doc,docx,pdf,jpeg,png,jpg|max:2048'
-        ];
-        $messages = [
-            'document.required' => 'Document is required',
-        ];
-        $validation = Validator::make($request->all(), $rules, $messages);
-        if ($validation->fails()) {
-            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
-        }
-        try {
-            $patient_doc = new PatientDocument();
-            $patient_doc->user_id = $request->user_id;
-            if ($request->hasFile('document')) {
-                $imageFile = $request->file('document');
-                if ($imageFile->isValid()) {
-                    $imageName = $imageFile->getClientOriginalName();
-                    $imageFile->move(public_path('user/documents'), $imageName);
-                    $patient_doc->document = $imageName;
-                }
-            }
-            $patient_doc->save();
-            return response()->json(['status' => true, 'response' => "File Added"]);
-        } catch (\Exception $e) {
-            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
-        }
     }
 
     public function updateDocument(Request $request)
