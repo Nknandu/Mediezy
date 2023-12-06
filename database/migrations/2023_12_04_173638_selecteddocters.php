@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('addfavourite', function (Blueprint $table) {
+        Schema::create('selecteddocters', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('UserId')->nullable();
-            $table->bigInteger('doctor_id')->default('0');
-
+            $table->string('cat_id')->nullable();
+            $table->json('dataList')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('addfavourite');
+        Schema::dropIfExists('selecteddocters');
     }
 };

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
+use Illuminate\Support\Facades\Log;
 use App\Models\Docter;
 use App\Models\DocterAvailability;
 use App\Models\DocterLeave;
@@ -25,7 +26,7 @@ class DocterController extends BaseController
 
 
 
-    public function index()
+    public function getallDocters()
     {
         $specializeArray['specialize'] = Specialize::all();
         $specificationArray['specification'] = Specification::all();
@@ -94,6 +95,87 @@ class DocterController extends BaseController
 
         return $this->sendResponse("Docters", $formattedOutput, '1', 'Docters retrieved successfully.');
     }
+    public function index()
+    {
+        // Assuming you have the authenticated user available in the request
+        $authenticatedUserId = auth()->user()->id;
+
+        $specializeArray['specialize'] = Specialize::all();
+        $specificationArray['specification'] = Specification::all();
+        $subspecificationArray['subspecification'] = Subspecification::all();
+
+        $docters = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')
+            ->get();
+
+        $doctersWithSpecifications = [];
+
+        foreach ($docters as $doctor) {
+            $id = $doctor['id'];
+
+            // Check if the doctor's user ID is in the "add_favorite" table for the authenticated user
+            $favoriteStatus = DB::table('addfavourite')
+                ->where('UserId', $authenticatedUserId)
+                ->where('doctor_id', $doctor['UserId'])
+                ->exists();
+
+            if (!isset($doctersWithSpecifications[$id])) {
+                $specialize = $specializeArray['specialize']->firstWhere('id', $doctor['specialization_id']);
+
+                $doctersWithSpecifications[$id] = [
+                    'id' => $id,
+                    'UserId' => $doctor['UserId'],
+                    'firstname' => $doctor['firstname'],
+                    'secondname' => $doctor['lastname'],
+                    'Specialization' => $specialize ? $specialize['specialization'] : null,
+                    'DocterImage' => asset("DocterImages/images/{$doctor['docter_image']}"),
+                    'About' => $doctor['about'],
+                    'Location' => $doctor['location'],
+                    'Gender' => $doctor['gender'],
+                    'emailID' => $doctor['email'],
+                    'Mobile Number' => $doctor['mobileNo'],
+                    'MainHospital' => $doctor['Services_at'],
+                    'subspecification_id' => $doctor['subspecification_id'],
+                    'specification_id' => $doctor['specification_id'],
+                    'specifications' => [],
+                    'subspecifications' => [],
+                    'clincs' => [],
+                    'favoriteStatus' => $favoriteStatus ? 1 : 0, // Add favorite status
+                ];
+            }
+
+            $specificationIds = explode(',', $doctor['specification_id']);
+            $subspecificationIds = explode(',', $doctor['subspecification_id']);
+
+            $doctersWithSpecifications[$id]['specifications'] = array_merge(
+                $doctersWithSpecifications[$id]['specifications'],
+                array_map(function ($id) use ($specificationArray) {
+                    return $specificationArray['specification']->firstWhere('id', $id)['specification'];
+                }, $specificationIds)
+            );
+
+            $doctersWithSpecifications[$id]['subspecifications'] = array_merge(
+                $doctersWithSpecifications[$id]['subspecifications'],
+                array_map(function ($id) use ($subspecificationArray) {
+                    return $subspecificationArray['subspecification']->firstWhere('id', $id)['subspecification'];
+                }, $subspecificationIds)
+            );
+
+            $doctersWithSpecifications[$id]['clincs'][] = [
+                'id'  => $doctor['avaliblityId'],
+                'name' => $doctor['hospital_Name'],
+                'availability' => $doctor['availability'],
+            ];
+        }
+
+        // Format the output to match the expected structure
+        $formattedOutput = array_values($doctersWithSpecifications);
+
+        return $this->sendResponse("Docters", $formattedOutput, '1', 'Docters retrieved successfully.');
+    }
+
+
+
 
 
 
@@ -181,40 +263,45 @@ class DocterController extends BaseController
             return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
         }
     }
-    // public function show($id)
-    // {
-    //     $Docter = Docter::find($id);
 
-    //     if (is_null($Docter)) {
-    //         return $this->sendError('Docter not found.');
-    //     }
-
-    //     return $this->sendResponse("Docter", $Docter, '1', 'Docter retrieved successfully.');
-    // }
 
     public function show($userId)
     {
+        $authenticatedUserId = auth()->user()->id;
+
+
+        $specializeArray['specialize'] = Specialize::all();
         $specificationArray['specification'] = Specification::all();
         $subspecificationArray['subspecification'] = Subspecification::all();
 
 
         $docters = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
             ->join('users', 'docter.UserId', '=', 'users.id') // Assuming 'UserId' is the foreign key in the 'Docter' table
-            ->select('docter.id', 'docter.UserId', 'docter.firstname', 'docter.lastname', 'docter.docter_image', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.id as avaliblityId', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')
-            ->where('users.id', $userId) // Filtering by UserId from the User table
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')            ->where('users.id', $userId) // Filtering by UserId from the User table
             ->get();
 
-        $doctersWithSpecifications = [];
+
+
+          $doctersWithSpecifications = [];
 
         foreach ($docters as $doctor) {
             $id = $doctor['id'];
 
+            // Check if the doctor's user ID is in the "add_favorite" table for the authenticated user
+            $favoriteStatus = DB::table('addfavourite')
+                ->where('UserId', $authenticatedUserId)
+                ->where('doctor_id', $doctor['UserId'])
+                ->exists();
+
             if (!isset($doctersWithSpecifications[$id])) {
+                $specialize = $specializeArray['specialize']->firstWhere('id', $doctor['specialization_id']);
+
                 $doctersWithSpecifications[$id] = [
                     'id' => $id,
                     'UserId' => $doctor['UserId'],
                     'firstname' => $doctor['firstname'],
                     'secondname' => $doctor['lastname'],
+                    'Specialization' => $specialize ? $specialize['specialization'] : null,
                     'DocterImage' => asset("DocterImages/images/{$doctor['docter_image']}"),
                     'About' => $doctor['about'],
                     'Location' => $doctor['location'],
@@ -227,6 +314,7 @@ class DocterController extends BaseController
                     'specifications' => [],
                     'subspecifications' => [],
                     'clincs' => [],
+                    'favoriteStatus' => $favoriteStatus ? 1 : 0, // Add favorite status
                 ];
             }
 
@@ -257,63 +345,8 @@ class DocterController extends BaseController
         // Format the output to match the expected structure
         $formattedOutput = array_values($doctersWithSpecifications);
 
-        return $this->sendResponse("Docter", $formattedOutput, '1', 'Docter retrieved successfully.');
+        return $this->sendResponse("Docter", $formattedOutput, '1', 'Docters retrieved successfully.');
     }
-
-    // public function update(Request $request, $userId)
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         $docter = Docter::find($userId);
-
-    //         if (is_null($docter)) {
-    //             return $this->sendError('Docter not found.');
-    //         }
-
-    //         $input = $request->all();
-
-    //         // Update fields as needed
-    //         $docter->firstname = $input['firstname'] ?? $docter->firstname;
-    //         $docter->lastname = $input['lastname'] ?? $docter->lastname;
-    //         $docter->mobileNo = $input['mobileNo'] ?? $docter->mobileNo;
-    //         $docter->email = $input['email'] ?? $docter->email;
-    //         $docter->location = $input['location'] ?? $docter->location;
-
-    //         // Handle image upload if a new image is provided
-    //         if ($request->hasFile('docter_image')) {
-    //             $imageFile = $request->file('docter_image');
-
-    //             if ($imageFile->isValid()) {
-    //                 $imageName = $imageFile->getClientOriginalName();
-    //                 $imageFile->move(public_path('DocterImages/images'), $imageName);
-
-    //                 $docter->docter_image = $imageName;
-    //             }
-    //         }
-
-    //         $docter->save();
-
-    //         $user = User::find($docter->UserId);
-
-    //     if (!is_null($user)) {
-    //         $user->firstname = $input['firstname'] ?? $user->firstname;
-    //         $user->secondname = $input['lastname'] ?? $user->secondname;
-    //         $user->mobileNo = $input['mobileNo'] ?? $user->mobileNo;
-    //         $user->email = $input['email'] ?? $user->email;
-    //         $user->save();
-    //     }
-
-    //         DB::commit();
-
-    //         return $this->sendResponse("Docter", $docter, '1', 'Docter updated successfully.');
-    //     } catch (\Exception $e) {
-    //         DB::rollback();
-    //         return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
-    //     }
-    // }
-
-
     public function update(Request $request, $userId)
     {
         try {
@@ -379,13 +412,52 @@ class DocterController extends BaseController
 
 
 
-    //get the docter by specialization
+
+
     public function getDoctorsBySpecialization($specializationId)
     {
-        $Doctors = Docter::findOrFail($specializationId);
+        $specializeArray['specialize'] = Specialize::all();
+        $specificationArray['specification'] = Specification::all();
+        $subspecificationArray['subspecification'] = Subspecification::all();
 
-        return response()->json($Doctors);
+        $specialization = Specialize::findOrFail($specializationId);
+
+        $doctors = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
+            ->where('docter.specialization_id', $specializationId)
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')
+            ->get();
+
+        $doctorsWithSpecifications = [];
+
+        foreach ($doctors as $doctor) {
+            $id = $doctor->id;
+
+            // Initialize doctor details if not already present
+            if (!isset($doctorsWithSpecifications[$id])) {
+                $doctorsWithSpecifications[$id] = [
+                    'id' => $id,
+                    'UserId' => $doctor->UserId,
+                    'firstname' => $doctor->firstname,
+                    'secondname' => $doctor->lastname,
+                    'Specialization' => $specialization ? $specialization->specialization : null,
+                    'DocterImage' => asset("DocterImages/images/{$doctor->docter_image}"),
+                    'Location' => $doctor->location,
+                    'MainHospital' => $doctor->Services_at,
+
+                ];
+            }
+
+
+        }
+
+        // Format the output to match the expected structure
+        $formattedOutput = array_values($doctorsWithSpecifications);
+
+
+        return $this->sendResponse("Docters", $formattedOutput, '1', 'Docters retrieved successfully.');
     }
+
+
 
 
 
@@ -486,7 +558,7 @@ class DocterController extends BaseController
             // Get the day of the week
             $dayOfWeek = $requestDate->format('l'); // 'l' format gives the full name of the day
             $allowedDaysArray = json_decode($shedulded_tokens->selecteddays);
-            $token_booking = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('clinic_id',$request->hospital_id)->get();
+            $token_booking = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->get();
 
             if (!$requestDate->between($startDate, $scheduledUptoDate)) {
                 return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this date']);
@@ -500,19 +572,19 @@ class DocterController extends BaseController
             $shedulded_tokens['tokens'] = json_decode($shedulded_tokens->tokens);
 
 
-            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date',$request->date)->first();
+            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date', $request->date)->first();
 
-            if($today_schedule){
-                $today_schedule['startingTime'] = $shedulded_tokens->startingTime ;
-                $today_schedule['endingTime']   = $shedulded_tokens->endingTime ;
-                $shedulded_tokens = $today_schedule ;
+            if ($today_schedule) {
+                $today_schedule['startingTime'] = $shedulded_tokens->startingTime;
+                $today_schedule['endingTime']   = $shedulded_tokens->endingTime;
+                $shedulded_tokens = $today_schedule;
                 $shedulded_tokens['tokens'] = json_decode($today_schedule->tokens);
             }
 
             foreach ($shedulded_tokens['tokens'] as $token) {
                 // Set is_booked to 1 (or any other value you want)
-                $token_booking = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('clinic_id',$request->hospital_id)->where('TokenTime',$token->Time)->where('TokenNumber',$token->Number)->first();
-                if($token_booking){
+                $token_booking = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->where('TokenTime', $token->Time)->where('TokenNumber', $token->Number)->first();
+                if ($token_booking) {
                     $token->is_booked = 1;
                 }
             }
@@ -535,7 +607,7 @@ class DocterController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $leaves = DocterLeave::select('id','docter_id','hospital_id','date')->where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->get();
+            $leaves = DocterLeave::select('id', 'docter_id', 'hospital_id', 'date')->where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->get();
             if (!$leaves) {
                 return response()->json(['status' => true, 'leaves_data' => null, 'message' => 'No leaves.']);
             }
@@ -564,15 +636,15 @@ class DocterController extends BaseController
             if (!$docter) {
                 return response()->json(['status' => false, 'message' => 'Doctor not found']);
             }
-            $token_booked = TokenBooking::where('date',$request->date)->where('doctor_id',$request->doctor_id)->where('clinic_id',$request->hospital_id)->first();
+            $token_booked = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->first();
 
-            if($token_booked){
+            if ($token_booked) {
                 return response()->json(['status' => false, 'message' => 'Already bookings in this date']);
             }
-            $leave = DocterLeave::where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->where('date',$request->date)->first();
-            if($leave){
-                DocterLeave::where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->where('date',$request->date)->delete();
-            }else{
+            $leave = DocterLeave::where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->where('date', $request->date)->first();
+            if ($leave) {
+                DocterLeave::where('docter_id', $request->doctor_id)->where('hospital_id', $request->hospital_id)->where('date', $request->date)->delete();
+            } else {
                 $leave = new DocterLeave();
                 $leave->date = $request->date;
                 $leave->hospital_id = $request->hospital_id;
@@ -584,4 +656,63 @@ class DocterController extends BaseController
             return response()->json(['status' => false, 'message' => "Internal Server Error"]);
         }
     }
+
+
+
+    // public function searchDoctor(Request $request)
+    // {
+    //     // Search for doctors by name
+    //     $doctors = Docter::where(function ($query) use ($request) {
+    //         $query->where('firstname', 'LIKE', '%' . $request->name . '%')
+    //               ->orWhere('lastname', 'LIKE', '%' . $request->name . '%');
+    //     })->get();
+    //     // $doctors = Docter::where('firstname', 'LIKE', '%' . $request->name . '%')
+    //     // ->get();
+
+
+    //     // Check if any doctors were found
+    //     if ($doctors->isEmpty()) {
+    //         $response = ['message' => 'No doctors found with the given name'];
+    //         return response()->json($response, 404);
+    //     }
+
+
+
+    //     return $this->sendResponse("Docters", $doctors, '1', 'Docters retrieved successfully.');
+    // }
+    public function searchDoctor(Request $request)
+    {
+
+
+        // Search for doctors by name
+        $doctors = Docter::where(function ($query) use ($request) {
+            $query->where('firstname', 'LIKE', '%' . $request->name . '%')
+                  ->orWhere('lastname', 'LIKE', '%' . $request->name . '%');
+        })->get();
+
+        // Check if any doctors were found
+        if ($doctors->isEmpty()) {
+            $response = ['message' => 'No doctors found with the given name'];
+            return response()->json($response, 404);
+        }
+
+        // Transform the doctors' data
+        $doctorsWithSpecifications = $doctors->map(function ($doctor) {
+            $specializeArray['specialize'] = Specialize::all();
+            $specialize = $specializeArray['specialize']->firstWhere('id', $doctor['specialization_id']);
+            return [
+                'id' => $doctor->id,
+                'UserId' => $doctor->UserId,
+                'firstname' => $doctor->firstname,
+                'secondname' => $doctor->lastname,
+                'Specialization' => $specialize ? $specialize['specialization'] : null,
+                'DocterImage' => asset("DocterImages/images/{$doctor->docter_image}"),
+                'Location' => $doctor->location,
+                'MainHospital' => $doctor->Services_at,
+            ];
+        });
+
+        return $this->sendResponse("Docters", $doctorsWithSpecifications, '1', 'Docters retrieved successfully.');
+    }
+
 }

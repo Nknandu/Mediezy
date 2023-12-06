@@ -16,13 +16,22 @@ class specializeController extends BaseController
      * Display a listing of the resource.
      */
 
-    public function index()
-    {
-        $specializations = Specialize::all();
+     public function index()
+     {
+         $specializations = Specialize::all();
+         $specializationDetails = [];
 
+         foreach ($specializations as $specialization) {
+             $specializationDetails[] = [
+                 'id' => $specialization->id,
+                 'specialization' => $specialization->specialization,
+                 'specializeimage' => asset("specializationimages/{$specialization->specializeimage}"),
+             ];
+         }
 
-        return $this->sendResponse("specializations", $specializations, '1', 'Specialization retrived successfully');
-    }
+         return $this->sendResponse("specializations", $specializationDetails, '1', 'Specialization retrieved successfully');
+     }
+
 
 
     /**

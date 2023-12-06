@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AppoinmentsController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BannerController;
+use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\DocterController;
 use App\Http\Controllers\API\GetTokenController;
 use App\Http\Controllers\API\LoginController;
@@ -50,9 +51,11 @@ Route::put('/subspecialization/{id}', [SubspecificationController::class, 'updat
 Route::delete('/subspecialization/{id}', [SubspecificationController::class, 'destroy']);
 
 
-
+Route::group(['middleware' => 'auth:api'], function () {
+    Route::get('/docter', [DocterController::class, 'index']);
+});
 //Docter
-Route::get('/docter', [DocterController::class, 'index']);
+Route::get('/getalldocters', [DocterController::class, 'getallDocters']);
 Route::get('/docter/{userId}', [DocterController::class, 'show']);
 
 
@@ -105,6 +108,8 @@ Route::delete('/Medicine/{id}', [MedicineController::class, 'destroy']);
 Route::post('/register', [RegisterController::class, 'register']);
 // User Registration
 Route::post('/Userregister', [UserController::class, 'UserRegister']);
+Route::get('/Useredit/{userId}', [UserController::class, 'UserEdit']);
+Route::put('/Userupdate/{userId}', [UserController::class, 'updateUserDetails']);
 //  Login
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -150,6 +155,7 @@ Route::group(['prefix' => 'docter'], function () {
     Route::post('/delete_tokens', [TokenGenerationController::class, 'deleteToken']);
     Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
     Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
+
 });
 
 Route::group(['prefix' => 'Tokens'], function () {
@@ -157,3 +163,10 @@ Route::post('/getTokendetails', [GetTokenController::class, 'getTokensForCheckIn
 Route::get('/getcurrentTokens', [GetTokenController::class, 'getCurrentDateTokens']);
 });
 Route::get('/user/userAppoinments/{userId}',[AppoinmentsController::class,'GetUserAppointments']);
+
+//Workfrom athira
+Route::get('/Showcategories', [CategoriesController::class, 'index']);
+Route::get('/ShowCategoriesdocter/{id}', [CategoriesController::class, 'show']);
+
+Route::post('/Categories', [CategoriesController::class, 'store']);
+Route::get('/searchdoctor', [DocterController::class, 'searchDoctor']);
