@@ -111,6 +111,11 @@ Route::group(['prefix' => 'user'], function () {
     Route::post('/upload_document',[UserController::class,'uploadDocument']);
     Route::post('/update_document',[UserController::class,'updateDocument']);
     Route::post('/get_uploaded_documents',[UserController::class,'getUploadedDocuments']);
+    Route::post('/reports_time_line',[UserController::class,'ReportsTimeLine']);
+    Route::post('/get_prescriptions',[UserController::class,'getPrescriptions']);
+    Route::post('/manage_member',[UserController::class,'manageMembers']);
+    Route::post('/manage_address',[UserController::class,'manageAddress']);
+    Route::post('/get_address',[UserController::class,'getUserAddresses']);
 });
 
 //code for add_prescription
@@ -121,7 +126,7 @@ Route::group(['prefix' => 'docter'], function () {
     Route::post('/delete_tokens', [TokenGenerationController::class, 'deleteToken']);
     Route::post('/leave_update',[DocterController::class,'leaveUpdate']);
     Route::post('/leaves',[DocterController::class,'getDoctorLeaveList']);
-
+    Route::post('/check_pincode_available',[DocterController::class,'checkPincodeAvailable']);
 });
 
 Route::group(['prefix' => 'Tokens'], function () {

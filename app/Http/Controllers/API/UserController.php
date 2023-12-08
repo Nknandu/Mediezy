@@ -12,6 +12,7 @@ use App\Models\PatientDocument;
 use App\Models\PatientPrescriptions;
 use App\Models\Symtoms;
 use App\Models\User;
+use App\Models\UserAddress;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -192,8 +193,6 @@ class UserController extends BaseController
         }
     }
 
-
-
     public function favouritestatus(Request $request)
     {
         $userId = $request->user_id;
@@ -224,18 +223,55 @@ class UserController extends BaseController
         return response()->json(['status' => true, 'message' => 'favourite added successfully .']);
     }
 
-
     public function getallfavourites($id)
     {
         $GetallFav = Favouritestatus::where('UserId', $id)->get();
         return $this->sendResponse('favourites', $GetallFav, '1', 'favourite retrieved successfully.');
     }
 
+    public function uploadDocument(Request $request)
+    {
+        $rules = [
+            'user_id'     => 'required',
+            'document'    => 'required|mimes:doc,docx,pdf,jpeg,png,jpg|max:2048'
+        ];
+        $messages = [
+            'document.required' => 'Document is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $user = User::where('id', $request->user_id)->first();
+            if (!$user) {
+                return response()->json(['status' => false, 'response' => "User not found"]);
+            }
+            $patient_doc = new PatientDocument();
+            $patient_doc->user_id = $request->user_id;
+            if ($request->hasFile('document')) {
+                $imageFile = $request->file('document');
+                if ($imageFile->isValid()) {
+                    $imageName = $imageFile->getClientOriginalName();
+                    $imageFile->move(public_path('user/documents'), $imageName);
+                    $patient_doc->document = $imageName;
+                }
+            }
+            $patient_doc->save();
+            $patient_doc->document = asset('user/documents') .'/'.$patient_doc->document ;
+            return response()->json(['status' => true, 'response' => "Uploading Success", 'document' => $patient_doc ]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+
+
     public function updateDocument(Request $request)
     {
         $rules = [
             'user_id'        => 'required',
             'document_id'    => 'required',
+            'patient_id'     => 'required',
             'type'           => 'required|in:1,2',
             'test_name'      => 'required_if:type,1',
             'lab_name'       => 'required_if:type,1',
@@ -251,9 +287,17 @@ class UserController extends BaseController
         }
         try {
             DB::beginTransaction();
+            $user = User::where('id', $request->user_id)->first();
+            if (!$user) {
+                return response()->json(['status' => false, 'response' => "User not found"]);
+            }
+            $patient = Patient::where('id', $request->patient_id)->where('UserId', $request->user_id)->first();
+            if (!$patient) {
+                return response()->json(['status' => false, 'response' => "Patient not found"]);
+            }
             $document = PatientDocument::where('user_id', $request->user_id)->where('id', $request->document_id)->first();
             if (!$document) {
-                return response()->json(['status' => false, 'message' => 'Document not found']);
+                return response()->json(['status' => false, 'response' => 'Document not found']);
             }
             $this->updateDocumentType($request, $document);
             DB::commit();
@@ -275,20 +319,25 @@ class UserController extends BaseController
             if (!$record) {
                 $record = new $model();
             }
+
+            $record->patient_id = $request->patient_id;
             $record->user_id = $request->user_id;
             $record->document_id = $request->document_id;
             $record->date = $request->date;
             $record->doctor_name = $request->doctor_name;
 
+            if ($type == '1') {
+                $record->test_name = $request->test_name;
+                $record->lab_name  = $request->lab_name;
+            }
             if ($request->notes) {
                 $record->notes = $request->notes;
             }
-
             if ($request->file_name) {
                 $this->updateDocumentFile($request, $document, $record);
             }
             $record->save();
-            $document->status = 1 ;
+            $document->status = 1;
             $document->type = $type;
             $document->save();
         }
@@ -328,11 +377,185 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id)->get();
+            $user = User::where('id', $request->user_id)->first();
+            if (!$user) {
+                return response()->json(['status' => false, 'response' => "User not found"]);
+            }
+            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id);
+            if ($request->type) {
+                $patient_doc = $patient_doc->where('type', $request->type);
+            }
+            $patient_doc = $patient_doc->get();
             if (!$patient_doc) {
                 $patient_doc = null;
             }
             return response()->json(['status' => true, 'document_data' => $patient_doc]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+    public function ReportsTimeLine(Request $request)
+    {
+        $rules = [
+            'user_id'     => 'required',
+            'patient_id'  => 'required',
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        $user = User::where('id', $request->user_id)->first();
+
+        try {
+            if (!$user) {
+                return response()->json(['status' => false, 'response' => "User not found"]);
+            }
+            $time_line = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))
+                ->where('user_id', $request->user_id)
+                ->where('type', 1)
+                ->whereHas('LabReports', function ($query) use ($request) {
+                    $query->where('patient_id', $request->patient_id);
+                })
+                ->with('LabReports')
+                ->get();
+            if (!$time_line) {
+                return response()->json(['status' => true, 'time_line' => null]);
+            }
+            return response()->json(['status' => true, 'time_line' => $time_line]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+    public function getPrescriptions(Request $request)
+    {
+        $rules = [
+            'user_id'     => 'required',
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $user = User::where('id', $request->user_id)->first();
+            if (!$user) {
+                return response()->json(['status' => false, 'response' => "User not found"]);
+            }
+            $prescriptions = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id)->where('type', 2)
+                ->whereHas('PatientPrescriptions', function ($query) use ($request) {
+                    $query->where('patient_id', $request->patient_id);
+                })->with('PatientPrescriptions')->get();
+            if (!$prescriptions) {
+                return response()->json(['status' => true, 'prescriptions' => null]);
+            }
+            return response()->json(['status' => true, 'prescriptions' => $prescriptions]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+    public function manageMembers(Request $request)
+    {
+        $rules = [
+            'user_id'     => 'required',
+            'first_name'  => 'required',
+            'last_name'   => 'required',
+            'gender'      => 'required|in:1,2,3',
+            'relation'    => 'required|in:1,2,3',
+            'email'       => 'required|email'
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $user = User::where('id', $request->user_id)->first();
+            if (!$user) {
+                return response()->json(['status' => false, 'response' => "User not found"]);
+            }
+            $patient = new Patient();
+            if ($request->patient_id) {
+                $patient = Patient::find($request->patient_id);
+                $msg = "Member update successfully";
+            } else {
+                $msg = "Member added successfully";
+            }
+            $patient->firstname = $request->first_name;
+            $patient->firstname = $request->first_name;
+            $patient->gender    = $request->gender;
+            $patient->user_type = $request->relation;
+            $patient->email     = $request->email;
+            $patient->UserId    = $request->user_id;
+            $patient->save();
+            return response()->json(['status' => true, 'response' => $msg]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+
+    public function manageAddress(Request $request)
+    {
+        $rules = [
+            'user_id'        => 'required',
+            'building_name'  => 'required',
+            'area'           => 'required',
+            'Landmark'       => 'required',
+            'pincode'        => 'required',
+            'city'           => 'required',
+            'state'          => 'required'
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $address = new UserAddress();
+            if ($request->id) {
+                $address = UserAddress::find($request->id);
+                $msg = "address update successfully";
+            } else {
+                $msg = "address added successfully";
+            }
+            $address->user_id       = $request->user_id;
+            $address->building_name = $request->building_name;
+            $address->area          = $request->area;
+            $address->Landmark      = $request->Landmark;
+            $address->pincode       = $request->pincode;
+            $address->city          = $request->city;
+            $address->state         = $request->state;
+            $address->save();
+
+            return response()->json(['status' => true, 'response' => $msg]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+
+    public function getUserAddresses(Request $request)
+    {
+        $rules = [
+            'user_id'        => 'required',
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $address = UserAddress::where('user_id',$request->user_id)->get();
+            return response()->json(['status' => true, 'address_data' => $address ]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
         }

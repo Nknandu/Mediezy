@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('lab_reports', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id');
+            $table->integer('patient_id')->nullable();
             $table->integer('document_id');
             $table->text('test_name');
             $table->string('date');
