@@ -230,12 +230,12 @@ class AppoinmentsController extends BaseController
 
             $currentOngoingToken = TokenBooking::where('doctor_id', $doctorId)
                 ->where('Is_checkIn', 1)
-                ->whereDate('date', $currentDate)
-                ->orderBy('TokenNumber', 'desc')
-                ->value('TokenNumber');
+                ->where('date', $currentDate)
+                ->orderBy('TokenNumber', 'ASC')
+                ->pluck('TokenNumber');
 
             if ($currentOngoingToken) {
-                return $currentOngoingToken;
+                return $currentOngoingToken->max();
             }
         }
 
