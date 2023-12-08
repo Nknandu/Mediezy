@@ -84,15 +84,14 @@ class UserController extends BaseController
 
     public function UserEdit($userId)
     {
-        $userDetails = Patient::where('UserId', $userId)->get();
-
-        if ($userDetails->isEmpty()) {
+        $userDetails = Patient::where('UserId', $userId)->where('user_type',1)->first();
+        if (!$userDetails) {
             $response = ['message' => 'User not found with the given UserId'];
             return response()->json($response, 404);
         }
-
         return $this->sendResponse('Userdetails', $userDetails, '1', 'User retrieved successfully.');
     }
+
 
 
     public function updateUserDetails(Request $request, $userId)
@@ -101,15 +100,7 @@ class UserController extends BaseController
             DB::beginTransaction();
 
             // Validate input
-            $request->validate([
-                'firstname' => 'required|string',
-                'secondname' => 'required|string',
-                'email' => 'required|email',
-                'mobileNo' => 'required|string',
-                'location' => 'required|string',
-                'gender' => 'required|string',
-                'user_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
+
 
             // Check if the user exists
             $user = User::find($userId);
@@ -119,25 +110,27 @@ class UserController extends BaseController
             }
 
             // Update user details
-            $user->firstname = $request->input('firstname');
-            $user->secondname = $request->input('secondname');
-            $user->email = $request->input('email');
-            $user->mobileNo = $request->input('mobileNo');
+            $user->firstname = $request->input('firstname') ?? $user->firstname;
+            $user->secondname = $request->input('secondname') ?? $user->secondname;
+            $user->email = $request->input('email') ?? $user->email;
+            $user->mobileNo = $request->input('mobileNo') ?? $user->mobileNo;
             $user->save();
 
             // Update patient details
-            $patient = Patient::where('UserId', $userId)->first();
+            $patient = Patient::where('UserId', $userId)->where('user_type', 1)->first();
 
             if (!$patient) {
                 return $this->sendResponse(null, null, '3', 'Patient not found.');
             }
+            $patient->firstname = $request->input('firstname') ?? $patient->firstname;
+            $patient->lastname = $request->input('secondname') ?? $patient->lastname;
+            $patient->mobileNo = $request->input('mobileNo') ?? $patient->mobileNo;
+            $patient->email = $request->input('email') ?? $patient->email;
+            $patient->location = $request->input('location') ?? $patient->location;
+            if ($request->has('gender')) {
+                $patient->gender = $request->input('gender') ?? $patient->gender;
+            }
 
-            $patient->firstname = $request->input('firstname');
-            $patient->lastname = $request->input('secondname');
-            $patient->mobileNo = $request->input('mobileNo');
-            $patient->email = $request->input('email');
-            $patient->location = $request->input('location');
-            $patient->gender = $request->input('gender');
 
             if ($request->hasFile('user_image')) {
                 $imageFile = $request->file('user_image');
@@ -201,6 +194,7 @@ class UserController extends BaseController
         try {
             // Get the currently authenticated doctor
             $doctor = Patient::where('UserId', $userId)->first();
+
 
             if (!$doctor) {
                 return response()->json(['message' => 'Patient not found.'], 404);

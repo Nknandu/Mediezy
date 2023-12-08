@@ -5,19 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Medicalshop extends Model
+class LabTest extends Model
 {
     use HasFactory;
-    protected $table="medicalshop";
+    protected $table="lab_test";
     protected $fillable = [
         'id',
-        'firstname',
-        'shop_image',
-        'mobileNo',
-        'location',
-        'email',
-        'address',
-        'UserId',
+        'lab_id',
+        'TestName',
+        'product_image',
+        'product_description',
+        'Test_price',
+        'discount',
+        'Total_price',
         'created_at',
         'updated_at'];
 }

@@ -14,7 +14,6 @@ class Laboratory extends Model
     protected $fillable = [
         'id',
         'firstname',
-        'lastname',
         'lab_image',
         'mobileNo',
         'location',
@@ -22,5 +21,5 @@ class Laboratory extends Model
         'address',
         'UserId',
         'created_at',
-        'updated_at'];
+        'updated_at','Type'];
 }

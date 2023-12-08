@@ -25,9 +25,18 @@ class Docter extends Model
     'Services_at',
     'UserId',
     'created_at',
-    'updated_at'];
+    'updated_at','HospitalId'];
 
 
-  
+    public function appointments()
+    {
+        return $this->hasMany(TokenBooking::class, 'doctor_id');
+    }
+
+    public function specialization()
+    {
+        return $this->hasOne(Specialize::class, 'id', '	specialization_id');
+    }
+
 }
 
