@@ -659,27 +659,6 @@ class DocterController extends BaseController
 
 
 
-    // public function searchDoctor(Request $request)
-    // {
-    //     // Search for doctors by name
-    //     $doctors = Docter::where(function ($query) use ($request) {
-    //         $query->where('firstname', 'LIKE', '%' . $request->name . '%')
-    //               ->orWhere('lastname', 'LIKE', '%' . $request->name . '%');
-    //     })->get();
-    //     // $doctors = Docter::where('firstname', 'LIKE', '%' . $request->name . '%')
-    //     // ->get();
-
-
-    //     // Check if any doctors were found
-    //     if ($doctors->isEmpty()) {
-    //         $response = ['message' => 'No doctors found with the given name'];
-    //         return response()->json($response, 404);
-    //     }
-
-
-
-    //     return $this->sendResponse("Docters", $doctors, '1', 'Docters retrieved successfully.');
-    // }
     public function searchDoctor(Request $request)
     {
 
@@ -692,8 +671,8 @@ class DocterController extends BaseController
 
         // Check if any doctors were found
         if ($doctors->isEmpty()) {
-            $response = ['message' => 'No doctors found with the given name'];
-            return response()->json($response, 404);
+
+            return $this->sendResponse("Docters", null, '1', 'No doctors found with the given name.');
         }
 
         // Transform the doctors' data

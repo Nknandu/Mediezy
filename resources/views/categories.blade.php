@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     @include('header')
     {{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
 </head>
-
 <body>
-
-
-
     <!-- Modal -->
     <div class="modal fade" id="EnquiryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
         aria-hidden="true">
@@ -27,14 +22,12 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-
                                     <label class="mt-2 mb-1 inputlabel">Category Name:<span
                                             style="color:red; font-size:15px">*</span></label><br>
                                     <input type="text" class="form-control mt-1 inputfield" id="category_name"
-                                        name="category_name" pattern="[^0-9]+" placeholder="Enter description" autofocus
+                                        name="category_name" pattern="[^0-9]+" placeholder="Enter Category name" autofocus
                                         required>
                                 </div>
-
                                 <div class="form-group">
                                     <label class="mt-2 mb-1 inputlabel">Description:<span
                                             style="color:red; font-size:15px">*</span></label><br>
@@ -70,20 +63,16 @@
                                 <label for="doctorsList">Select Doctor:</label>
                                 <select class="form-control" id="doctorsList" name="doctorsList"></select>
                             </div>
-
                             <div class="text-end mt-3">
                                 <button type="submit" class="btn savebtn px-5">Save</button>
                             </div>
                         </a>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>
     </div>
-
-
     <div class="wrapper">
         <!--CONTENTS-->
         <div class="container-fluid mainContents">
@@ -129,8 +118,6 @@
 
 
     @include('footer')
-
-
     {{-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> --}}
     {{-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script> --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -204,7 +191,6 @@
                                 // Get the search value
                                 $(this).attr('title', $(this).val());
                                 var regexr = '({search})'; //$(this).parents('th').find('select').val();
-
                                 // var cursorPosition = this.selectionStart;
                                 // Search the column for that value
                                 api
@@ -312,8 +298,8 @@
                                         if (doctor) {
                                             selectedDoctorsArray.push({
                                                 id: doctor.id,
-                                                name: doctor
-                                                    .firstname,
+                                                // name: doctor
+                                                //     .firstname,
                                                 userid: doctor.UserId,
                                             });
                                         }

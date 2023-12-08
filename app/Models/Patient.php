@@ -19,5 +19,5 @@ class Patient extends Model
     'email',
     'UserId',
     'created_at',
-    'updated_at'];
+    'updated_at','user_type'];
 }
