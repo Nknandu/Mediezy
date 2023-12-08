@@ -150,11 +150,12 @@ class AppoinmentsController extends BaseController
             $firstToken = reset($tokensArray);
             $firstTime = $firstToken['Time'];
 
-            if ($today_schedule && property_exists($today_schedule, 'delay_type')) {
-                if ($today_schedule->delay_type === 1) { //check if the doctor is early
-                    $DocterEarly = $today_schedule->delay_time;
-                } elseif ($today_schedule->delay_type === 2) { //check if the doctor is late
-                    $DocterLate = $today_schedule->delay_time;
+            if ($today_schedule && $today_schedule->offsetExists('delay_type')) {
+
+                if ($today_schedule->getAttribute('delay_type') === 1) {
+                    $DocterEarly = $today_schedule->getAttribute('delay_time');
+                } elseif ($today_schedule->getAttribute('delay_type') === 2) {
+                    $DocterLate = $today_schedule->getAttribute('delay_time');
                 }
             }
 
@@ -176,15 +177,15 @@ class AppoinmentsController extends BaseController
                     'TokenBookingDate' => Carbon::parse($appointment->Bookingtime)->toDateString(),
                     'TokenBookingTime' => Carbon::parse($appointment->Bookingtime)->toTimeString(),
                     'ConsultationStartsfrom' => $firstTime,
-                    'DoctorEarlyFor' => $DocterEarly,
-                    'DoctorLateFor' => $DocterLate,
-
+                    'DoctorEarlyFor' => intval($DocterEarly), // Convert to integer
+                    'DoctorLateFor' => intval($DocterLate), // Convert to integer
                 ];
-                if ($key > 0) {
+                if ($key >= 1) {
                     $previousAppointment = TokenBooking::find($appointments[$key - 1]->id);
 
-                    $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->format('g:i');
-
+                    if ($previousAppointment) {
+                        $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->format('g:i');
+                    }
                 }
                 // Extract doctor details from the first appointment (assuming all appointments have the same doctor details)
                 $doctorDetails = [
@@ -240,15 +241,5 @@ class AppoinmentsController extends BaseController
 
         return null;
     }
-    private function calculateDuration($startTime, $endTime)
-    {
-        // Parse the start and end times using Carbon
-        $start = Carbon::parse($startTime);
-        $end = Carbon::parse($endTime);
 
-        // Calculate the duration in minutes
-        $durationInMinutes = $end->diffInMinutes($start);
-
-        return $durationInMinutes;
-    }
 }

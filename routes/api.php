@@ -6,7 +6,10 @@ use App\Http\Controllers\API\BannerController;
 use App\Http\Controllers\API\CategoriesController;
 use App\Http\Controllers\API\DocterController;
 use App\Http\Controllers\API\GetTokenController;
+use App\Http\Controllers\API\HospitalController;
+use App\Http\Controllers\API\LabController;
 use App\Http\Controllers\API\LoginController;
+use App\Http\Controllers\API\MedicalshopController;
 use App\Http\Controllers\API\MedicineController;
 use App\Http\Controllers\API\RegisterController;
 use App\Http\Controllers\API\ScheduleController;
@@ -141,3 +144,24 @@ Route::get('/ShowCategoriesdocter/{id}', [CategoriesController::class, 'show']);
 
 Route::post('/Categories', [CategoriesController::class, 'store']);
 Route::get('/searchdoctor', [DocterController::class, 'searchDoctor']);
+
+
+//medicalshop
+Route::group(['prefix' => 'medicalshop'], function () {
+    Route::post('/Register', [MedicalshopController::class, 'MedicalshopRegister']);
+    Route::post('/medicine',[MedicalshopController::class, 'MedicineProduct']);
+    });
+//Laboratory
+ Route::group(['prefix' => 'Lab'], function () {
+        Route::post('/LabRegister', [LabController::class, 'LabRegister']);
+
+  Route::post('/medicine',[LabController::class, 'MedicineProduct']);
+
+ });
+
+ Route::group(['prefix' => 'Hospital'], function () {
+    Route::post('/Register', [HospitalController::class, 'HospitalRegister']);
+
+});
+
+

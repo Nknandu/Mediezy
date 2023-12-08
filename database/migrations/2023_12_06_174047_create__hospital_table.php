@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('medicalshop', function (Blueprint $table) {
+        Schema::create('hospital', function (Blueprint $table) {
             $table->id();
             $table->string('firstname');
-            $table->string('shop_image', 100)->nullable();
+            $table->string('lastname');
+            $table->string('Hospital_image', 100)->nullable();
             $table->string('mobileNo', 50)->nullable();
             $table->string('location', 50)->nullable();
             $table->string('email', 50)->nullable();
             $table->string('address', 200)->nullable();
             $table->integer('UserId')->length(11)->default("0");
+            $table->integer('Type')->length(11)->default("0");
             $table->timestamps();
         });
     }
@@ -29,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('medicalshop');
+        Schema::dropIfExists('_hospital');
     }
 };

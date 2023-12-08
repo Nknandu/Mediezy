@@ -20,71 +20,7 @@ class TokenBookingController extends BaseController
 {
 
 
-    // public function bookToken(Request $request)
-    // {
-    //     // Validate request data
-    //     $this->validate($request, [
-    //         'BookedPerson_id' => 'required',
-    //         'PatientName' => 'required',
-    //         'gender' => 'required',
-    //         'age' => 'required',
-    //         'MobileNo' => 'required',
-    //         'Appoinmentfor' => 'required|array',
-    //         'date' => 'required|date_format:Y-m-d',
-    //         'TokenNumber' => 'required',
-    //         'TokenTime' => 'required',
-    //         'whenitstart' => 'required',
-    //         'whenitcomes' => 'required',
-    //         'regularmedicine' => 'required',
-    //         'doctor_id'=> 'required',
-    //     ]);
 
-    //     // Check if the user is a doctor
-    //     $isDoctor = $request->has('doctor_id');
-    //     $specializationId = null;
-
-    //     if ($isDoctor) {
-    //         // If the user is a doctor, get the specialization_id from the doctor's record
-    //         $specializationId = Docter::where('id', $request->input('doctor_id'))->value('specialization_id');
-    //     }
-    //     // Find or create symptoms
-    //     $symptomIds = [];
-    //     foreach ($request->input('Appoinmentfor') as $symptomName) {
-    //         $symptom = Symtoms::firstOrNew(['symtoms' => $symptomName]);
-
-    //         if (!$symptom->exists) {
-    //             $symptom->specialization_id = $specializationId;
-    //             $symptom->save();
-    //         }
-
-    //         $symptomIds[] = $symptom->id;
-    //     }
-    //     // Update the request with the symptoms IDs as a comma-separated string
-    //     $request->merge(['Appoinmentfor_id' => implode(',', $symptomIds)]);
-
-    //     // Create a new token booking with the current time
-    //     $tokenBooking = DB::transaction(function () use ($request, $isDoctor) {
-    //         $bookingData = [
-    //             'BookedPerson_id' => $request->input('BookedPerson_id'),
-    //             'PatientName' => $request->input('PatientName'),
-    //             'gender' => $request->input('gender'),
-    //             'age' => $request->input('age'),
-    //             'MobileNo' => $request->input('MobileNo'),
-    //             'Appoinmentfor_id' => $request->input('Appoinmentfor_id'),
-    //             'date' => $request->input('date'),
-    //             'TokenNumber' => $request->input('TokenNumber'),
-    //             'TokenTime' => $request->input('TokenTime'),
-    //             'doctor_id' =>$request->input('doctor_id'),
-    //             'Bookingtime' => now(),
-    //         ];
-
-
-    //         return TokenBooking::create($bookingData);
-    //     });
-
-    //     // Return a success response
-    //     return $this->sendResponse("TokenBooking", $tokenBooking, '1', 'Token Booked successfully.');
-    // }
 
     public function bookToken(Request $request)
     {
@@ -105,7 +41,8 @@ class TokenBookingController extends BaseController
                 'doctor_id' => 'required',
                 'Appoinmentfor1' => 'required|array',
                 'Appoinmentfor2' => 'required|array',
-                'clinic_id'=> 'required'
+                'clinic_id'=> 'required',
+                'Bookingtype'=> 'sometimes|in:1,2,3' //1 for self,2 for familymember ,3 for others
             ]);
 
             $isDoctor = $request->has('doctor_id');
@@ -159,6 +96,7 @@ class TokenBookingController extends BaseController
                 $patientId = DB::table('patient')->insertGetId([
                     'firstname' => $request->input('PatientName'),
                     'mobileNo' => $request->input('MobileNo'),
+                    'user_type'=>$request->input('Bookingtype'),
                     'UserId' => $userId,
                 ]);
             }

@@ -128,6 +128,7 @@ class UserController extends BaseController
             // Get the currently authenticated doctor
             $doctor = Patient::where('UserId', $userId)->first();
 
+
             if (!$doctor) {
                 return response()->json(['message' => 'Patient not found.'], 404);
             }

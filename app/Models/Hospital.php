@@ -5,19 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Medicalshop extends Model
+class Hospital extends Model
 {
     use HasFactory;
-    protected $table="medicalshop";
+    protected $table="Hosptal";
     protected $fillable = [
         'id',
         'firstname',
-        'shop_image',
+        'hospital_image',
         'mobileNo',
         'location',
         'email',
         'address',
         'UserId',
         'created_at',
-        'updated_at'];
+        'updated_at','Type'];
+
 }
