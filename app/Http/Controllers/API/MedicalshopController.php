@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
+use App\Models\FavouriteShop;
 use App\Models\Medicalshop;
 use App\Models\MedicineProduct;
 use App\Models\User;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 class MedicalshopController extends BaseController
@@ -156,4 +158,123 @@ class MedicalshopController extends BaseController
     }
 
 
+    public function GetMedicalShopForDoctors(){
+
+        if (Auth::check()) {
+            $loggedInDoctorId = Auth::user()->id;
+
+        $Medicalshops = Medicalshop::all();
+          $MedicalshopDetails = [];
+
+
+
+          foreach ($Medicalshops as $Medicalshop) {
+
+            $favoriteStatus = DB::table('favouirtes_shop')
+            ->where('doctor_id', $loggedInDoctorId)
+            ->where('medicalshop_id', $Medicalshops->id)
+            ->exists();
+
+              $MedicalshopDetails[] = [
+                  'id' => $Medicalshop->id,
+                  'MedicalShop' => $Medicalshop->firstname,
+                  'MedicalShopimage' => asset("shopImages/{$Medicalshop->shop_image}"),
+                  'mobileNo'=>$Medicalshop->mobileNo,
+                  'location'=>$Medicalshop->location,
+                  'favoriteStatus' => $favoriteStatus ? 1 : 0,
+              ];
+          }
+
+          return $this->sendResponse("MedicalShop", $MedicalshopDetails, '1', 'MedicalShop retrieved successfully');
+
+        }
+  }
+  public function GetAllMedicalShops(){
+
+
+        $Medicalshops = Medicalshop::all();
+          $MedicalshopDetails = [];
+
+
+
+          foreach ($Medicalshops as $Medicalshop) {
+              $MedicalshopDetails[] = [
+                  'id' => $Medicalshop->id,
+                  'MedicalShop' => $Medicalshop->firstname,
+                  'MedicalShopimage' => asset("shopImages/{$Medicalshop->shop_image}"),
+                  'mobileNo'=>$Medicalshop->mobileNo,
+                  'location'=>$Medicalshop->location,
+              ];
+          }
+
+          return $this->sendResponse("MedicalShop", $MedicalshopDetails, '1', 'MedicalShop retrieved successfully');
+
+
+  }
+
+
+  public function addFavouirtesshop(Request $request)
+  {
+
+      $docterId = $request->doctor_id;
+      $MediShop = $request->medicalshop_id;
+      $Medicalshop = Medicalshop::find($MediShop);
+
+      if (!$Medicalshop) {
+          return response()->json(['error' => 'Medicalshop not found'], 404);
+      }
+
+      // Check if the user has already added the doctor to favorites
+      $existingFavourite = FavouriteShop::where('medicalshop_id', $MediShop)
+          ->where('doctor_id', $docterId)
+          ->first();
+
+      if ($existingFavourite) {
+        FavouriteShop::where('doctor_id', $docterId)->where('medicalshop_id', $MediShop)->delete();
+          return response()->json(['status' => true, 'message' => 'favourite Removed successfully .']);
+      } else {
+          // If not, create a new entry in the addfavourites table
+          $addfav = new FavouriteShop();
+          $addfav->medicalshop_id = $MediShop;
+          $addfav->doctor_id = $docterId;
+          $addfav->save();
+      }
+
+      return response()->json(['status' => true, 'message' => 'favourite added successfully .']);
+  }
+
+
+
+
+  public function getFavMedicalshop()
+    {
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            $loggedInDoctorId = Auth::user()->id;
+
+            $favoritemedicalshop = FavouriteShop::leftJoin('medicalshop', 'medicalshop.id', '=', 'favouirtes_shop.medicalshop_id')
+            ->where('doctor_id', $loggedInDoctorId)
+            ->select('medicalshop.*')
+            ->get();
+
+            $medicalshopDetails = [];
+
+            foreach ($favoritemedicalshop as $medicalshop) {
+                $medicalshopDetails[] = [
+                    'id' => $medicalshop->id,
+                    'UserId' => $medicalshop->UserId,
+                    'Laboratory' => $medicalshop->firstname,
+                    'Laboratoryimage' => asset("LabImages/{$medicalshop->shop_image}"),
+                    'mobileNo' => $medicalshop->mobileNo,
+                    'location' => $medicalshop->location,
+                ];
+            }
+
+            return response()->json(['status' => true, 'message' => 'Favorite medicalshops retrieved successfully.', 'favoritemedicalshop' => $medicalshopDetails]);
+        } else {
+            return response()->json(['status' => false, 'message' => 'User not authenticated.']);
+        }
+    }
+
+    
 }

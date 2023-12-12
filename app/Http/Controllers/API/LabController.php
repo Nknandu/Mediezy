@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\API\BaseController;
+use App\Models\FavouriteLab;
 use App\Models\Laboratory;
 use App\Models\LabTest;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -27,9 +29,9 @@ class LabController extends BaseController
                 'firstname' => 'required',
                 'email' => 'required',
                 'password' => 'required',
-                'mobileNo'=> 'required',
-                'address'=> 'required',
-                'Type' =>'sometimes|in:1,2' // 1 for lab, 2 for scanning
+                'mobileNo' => 'required',
+                'address' => 'required',
+                'Type' => 'sometimes|in:1,2' // 1 for lab, 2 for scanning
             ]);
 
             if ($validator->fails()) {
@@ -88,7 +90,7 @@ class LabController extends BaseController
 
 
 
-    public function MedicineProduct(Request $request)
+    public function LabTest(Request $request)
     {
         try {
             // Validate request data
@@ -141,7 +143,6 @@ class LabController extends BaseController
 
             // Return success response
             return $this->sendResponse('MedicineProduct', $MedicineData, '1', 'Medicine added successfully.');
-
         } catch (ValidationException $e) {
             // Handle validation errors
             return $this->sendError('Validation Error', $e->errors(), 422);
@@ -153,6 +154,158 @@ class LabController extends BaseController
             return $this->sendError('Error', $e->getMessage(), 500);
         }
     }
+//get all the lab for docter App
+    public function GetLabForDoctors()
+    {
+        if (Auth::check()) {
+            $loggedInDoctorId = Auth::user()->id;
+
+            $Laboratories = Laboratory::where('Type', 1)->get();
+            $LaboratoryDetails = [];
+
+            foreach ($Laboratories as $Laboratory) {
+                // Check favorite status for each laboratory
+                $favoriteStatus = DB::table('favouriteslab')
+                    ->where('doctor_id', $loggedInDoctorId)
+                    ->where('lab_id', $Laboratory->id)
+                    ->exists();
+
+                $LaboratoryDetails[] = [
+                    'id' => $Laboratory->id,
+                    'UserId' => $Laboratory->UserId,
+                    'Laboratory' => $Laboratory->firstname,
+                    'Laboratoryimage' => asset("LabImages/{$Laboratory->lab_image}"),
+                    'mobileNo' => $Laboratory->mobileNo,
+                    'location' => $Laboratory->location,
+                    'favoriteStatus' => $favoriteStatus ? 1 : 0,
+                ];
+            }
+
+            return $this->sendResponse("Laboratory", $LaboratoryDetails, '1', 'Laboratory retrieved successfully');
+        }
+    }
+
+    public function GetScanningForDoctors()
+    {
+        if (Auth::check()) {
+            $loggedInDoctorId = Auth::user()->id;
+
+            $Laboratories = Laboratory::where('Type', 2)->get();
+            $LaboratoryDetails = [];
+
+            foreach ($Laboratories as $Laboratory) {
+                // Check favorite status for each laboratory
+                $favoriteStatus = DB::table('favouriteslab')
+                    ->where('doctor_id', $loggedInDoctorId)
+                    ->where('lab_id', $Laboratory->id)
+                    ->exists();
+
+                $LaboratoryDetails[] = [
+                    'id' => $Laboratory->id,
+                    'UserId' => $Laboratory->UserId,
+                    'Laboratory' => $Laboratory->firstname,
+                    'Laboratoryimage' => asset("LabImages/{$Laboratory->lab_image}"),
+                    'mobileNo' => $Laboratory->mobileNo,
+                    'location' => $Laboratory->location,
+                    'favoriteStatus' => $favoriteStatus ? 1 : 0,
+                ];
+            }
+
+            return $this->sendResponse("Laboratory", $LaboratoryDetails, '1', 'Laboratory retrieved successfully');
+        }
+    }
+
+
+
+    public function GetAllLabs()
+    {
+        $Laboratories = Laboratory::where('Type', 1)->get();
+            $LaboratoryDetails = [];
+
+            foreach ($Laboratories as $Laboratory) {
+
+                $LaboratoryDetails[] = [
+                    'id' => $Laboratory->id,
+                    'UserId' => $Laboratory->UserId,
+                    'Laboratory' => $Laboratory->firstname,
+                    'Laboratoryimage' => asset("LabImages/{$Laboratory->lab_image}"),
+                    'mobileNo' => $Laboratory->mobileNo,
+                    'location' => $Laboratory->location,
+
+                ];
+            }
+
+            return $this->sendResponse("Laboratory", $LaboratoryDetails, '1', 'Laboratory retrieved successfully');
+
+    }
+
+
+    public function addFavouirtesLab(Request $request)
+    {
+
+        $docterId = $request->doctor_id;
+        $LabId = $request->lab_id;
+        $Laboratory = Laboratory::find($LabId);
+
+        if (!$Laboratory) {
+            return response()->json(['error' => 'Laboratory not found'], 404);
+        }
+
+        // Check if the user has already added the doctor to favorites
+        $existingFavourite = FavouriteLab::where('lab_id', $LabId)
+            ->where('doctor_id', $docterId)
+            ->first();
+
+        if ($existingFavourite) {
+            FavouriteLab::where('doctor_id', $docterId)->where('lab_id', $LabId)->delete();
+            return response()->json(['status' => true, 'message' => 'favourite Removed successfully .']);
+        } else {
+            // If not, create a new entry in the addfavourites table
+            $addfav = new FavouriteLab();
+            $addfav->lab_id = $LabId;
+            $addfav->doctor_id = $docterId;
+            $addfav->save();
+        }
+
+        return response()->json(['status' => true, 'message' => 'favourite added successfully .']);
+    }
+
+
+    public function getFavlab()
+    {
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            $loggedInDoctorId = Auth::user()->id;
+
+            $favoriteLabs = FavouriteLab::leftJoin('laboratory', 'laboratory.id', '=', 'favouriteslab.lab_id')
+            ->where('doctor_id', $loggedInDoctorId)
+            ->select('laboratory.*')
+            ->get();
+
+            $LaboratoryDetails = [];
+
+            foreach ($favoriteLabs as $Laboratory) {
+                $LaboratoryDetails[] = [
+                    'id' => $Laboratory->id,
+                    'UserId' => $Laboratory->UserId,
+                    'Laboratory' => $Laboratory->firstname,
+                    'Laboratoryimage' => asset("LabImages/{$Laboratory->lab_image}"),
+                    'mobileNo' => $Laboratory->mobileNo,
+                    'location' => $Laboratory->location,
+                ];
+            }
+
+            return response()->json(['status' => true, 'message' => 'Favorite labs retrieved successfully.', 'favoriteLabs' => $LaboratoryDetails]);
+        } else {
+            return response()->json(['status' => false, 'message' => 'User not authenticated.']);
+        }
+    }
+
+
+
+
+
+
 
 
 

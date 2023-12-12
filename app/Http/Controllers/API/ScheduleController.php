@@ -49,6 +49,7 @@ class ScheduleController extends BaseController
                 'TokenCount' => ['max:250'],
                 'timeduration' => ['required', 'max:25'],
                 'format' => ['max:250'],
+                'section'=>['required', 'max:25']
             ]);
 
             if ($validator->fails()) {
