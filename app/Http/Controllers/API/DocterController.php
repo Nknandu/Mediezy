@@ -277,12 +277,12 @@ class DocterController extends BaseController
 
         $docters = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
             ->join('users', 'docter.UserId', '=', 'users.id') // Assuming 'UserId' is the foreign key in the 'Docter' table
-            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')            ->where('users.id', $userId) // Filtering by UserId from the User table
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')->where('users.id', $userId) // Filtering by UserId from the User table
             ->get();
 
 
 
-          $doctersWithSpecifications = [];
+        $doctersWithSpecifications = [];
 
         foreach ($docters as $doctor) {
             $id = $doctor['id'];
@@ -446,8 +446,6 @@ class DocterController extends BaseController
 
                 ];
             }
-
-
         }
 
         // Format the output to match the expected structure
@@ -666,7 +664,7 @@ class DocterController extends BaseController
         // Search for doctors by name
         $doctors = Docter::where(function ($query) use ($request) {
             $query->where('firstname', 'LIKE', '%' . $request->name . '%')
-                  ->orWhere('lastname', 'LIKE', '%' . $request->name . '%');
+                ->orWhere('lastname', 'LIKE', '%' . $request->name . '%');
         })->get();
 
         // Check if any doctors were found
@@ -690,7 +688,6 @@ class DocterController extends BaseController
                 'MainHospital' => $doctor->Services_at,
             ];
         });
-
         return $this->sendResponse("Docters", $doctorsWithSpecifications, '1', 'Docters retrieved successfully.');
     }
 
