@@ -227,7 +227,7 @@ class UserController extends BaseController
     public function getallfavourites($id)
     {
         $GetallFav = Favouritestatus::where('UserId', $id)->get();
-        return $this->sendResponse('favourites', $GetallFav, '1', 'favourite retrieved successfully.');
+        return $this->sendResponse('favoriteDoctors', $GetallFav, '1', 'favourite retrieved successfully.');
     }
 
     public function uploadDocument(Request $request)
