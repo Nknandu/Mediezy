@@ -369,10 +369,10 @@ class UserController extends BaseController
                     $patient_doc->document = $imageName;
                 }
             }
-            $patient_doc->patient_id = $request->patient_id ;
+            $patient_doc->patient_id = $request->patient_id;
             $patient_doc->save();
-            $patient_doc->document = asset('user/documents') .'/'.$patient_doc->document ;
-            return response()->json(['status' => true, 'response' => "Uploading Success", 'document' => $patient_doc ]);
+            $patient_doc->document = asset('user/documents') . '/' . $patient_doc->document;
+            return response()->json(['status' => true, 'response' => "Uploading Success", 'document' => $patient_doc]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
         }
@@ -447,7 +447,7 @@ class UserController extends BaseController
                 $this->updateDocumentFile($request, $document, $record);
             }
             $record->save();
-            $document->patient_id = $request->patient_id ;
+            $document->patient_id = $request->patient_id;
             $document->status = 1;
             $document->type = $type;
             $document->save();
@@ -489,7 +489,7 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id)->where('patient_id',$request->patient_id);
+            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id)->where('patient_id', $request->patient_id);
 
             if ($request->type) {
                 $patient_doc = $patient_doc->where('type', $request->type);
@@ -663,8 +663,32 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $address = UserAddress::where('user_id',$request->user_id)->get();
-            return response()->json(['status' => true, 'address_data' => $address ]);
+            $address = UserAddress::where('user_id', $request->user_id)->get();
+            return response()->json(['status' => true, 'address_data' => $address]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
+
+    public function PatientHistory(Request $request)
+    {
+        $rules = [
+            'patient_id'        => 'required',
+        ];
+        $messages = [
+            'patient_id.required' => 'PatientId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $patientId = $request->patient_id ;
+            $history = PatientDocument::where('patient_id',$patientId)->with('LabReports','PatientPrescriptions')->first();
+            if(!$history){
+                $history = null ;
+            }
+            return response()->json(['status' => true, 'history_data' => $history]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
         }
