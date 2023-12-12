@@ -9,7 +9,6 @@ use App\Models\TodaySchedule;
 use App\Models\TodayShedule;
 use App\Models\TokenBooking;
 use Carbon\Carbon;
-
 use DateInterval;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -63,11 +62,11 @@ class TokenGenerationController extends BaseController
         try {
             $cards = [];
             $counter = 1; // Initialize the counter before the loop
-
+            if ($request->has('startingMorningTime') && $request->has('endingMorningTime') && $request->has('morningTimeDuration')) {
             $startMorningTime = $request->startingMorningTime;
             $endMorningTime = $request->endingMorningTime;
             $durationMorning = $request->morningTimeDuration;
-            $section=$request->section;
+           
 
             // Use Carbon to parse input times for morning section
             $startTimeMorning = Carbon::createFromFormat('H:i', $startMorningTime);
@@ -81,7 +80,6 @@ class TokenGenerationController extends BaseController
 
             while ($currentTimeMorning <= $endTimeMorning) {
                 $cards[] = [
-                    'Section'=>$section,
                     'Number' => $counter, // Use the counter for auto-incrementing 'Number'
                     'Time' => $currentTimeMorning->format('H:i'),
                     'Tokens' => $currentTimeMorning->add($timeIntervalMorning)->format('H:i'),
@@ -91,7 +89,7 @@ class TokenGenerationController extends BaseController
 
                 $counter++; // Increment the counter for the next card
             }
-
+        }
             // Check if evening section is present
             if ($request->has('startingEveningTime') && $request->has('endingEveningTime') && $request->has('eveningTimeDuration')) {
                 $startingNumberEvening = ($counter == 1) ? 1 : $counter;
