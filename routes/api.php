@@ -122,6 +122,9 @@ Route::group(['prefix' => 'user'], function () {
     Route::post('/manage_member',[UserController::class,'manageMembers']);
     Route::post('/manage_address',[UserController::class,'manageAddress']);
     Route::post('/get_address',[UserController::class,'getUserAddresses']);
+    Route::post('/get_patients',[UserController::class,'getPatients']);
+
+
 });
 
 //code for add_prescription
