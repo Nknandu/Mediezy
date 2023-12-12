@@ -180,13 +180,21 @@ class AppoinmentsController extends BaseController
                     'DoctorEarlyFor' => intval($DocterEarly), // Convert to integer
                     'DoctorLateFor' => intval($DocterLate), // Convert to integer
                 ];
-                if ($key >= 1) {
-                    $previousAppointment = TokenBooking::find($appointments[$key - 1]->id);
 
-                    if ($previousAppointment) {
-                        $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->format('g:i');
-                    }
-                }
+                $previousAppointment = Patient::join('token_booking', 'token_booking.BookedPerson_id', '=', 'patient.UserId')
+    ->join('docter', 'docter.UserId', '=', 'token_booking.doctor_id')
+    ->where('patient.UserId', $doctor->UserId)
+    ->where('token_booking.date', '<', now()) // Assuming 'date' is the timestamp field
+    ->orderBy('token_booking.date', 'desc')
+    ->where('Is_completed', 1) // Assuming 'Is_completed' is a flag indicating a completed appointment
+    ->first(['token_booking.*', 'docter.*']);
+
+
+
+if ($previousAppointment) {
+    $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->format('g:i');
+}
+
                 // Extract doctor details from the first appointment (assuming all appointments have the same doctor details)
                 $doctorDetails = [
                     'firstname' => $appointment->firstname,

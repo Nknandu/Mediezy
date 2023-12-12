@@ -150,12 +150,23 @@ Route::get('/searchdoctor', [DocterController::class, 'searchDoctor']);
 Route::group(['prefix' => 'medicalshop'], function () {
     Route::post('/Register', [MedicalshopController::class, 'MedicalshopRegister']);
     Route::post('/medicine',[MedicalshopController::class, 'MedicineProduct']);
+    Route::get('/getallmedicalshop',[MedicalshopController::class, 'GetMedicalShopForDoctors']);
+    Route::get('/getmedicalshops',[MedicalshopController::class, 'GetAllMedicalShops']);
+
+
+
+
+
     });
 //Laboratory
  Route::group(['prefix' => 'Lab'], function () {
-        Route::post('/LabRegister', [LabController::class, 'LabRegister']);
-
-  Route::post('/medicine',[LabController::class, 'MedicineProduct']);
+    Route::post('/LabRegister', [LabController::class, 'LabRegister']);
+    Route::post('/Test',[LabController::class, 'LabTest']);
+    Route::get('/getalllab',[LabController::class, 'GetLabForDoctors']);
+    Route::get('/getallScanningCenter',[LabController::class, 'GetScanningForDoctors']);
+    Route::post('/addfavLab',[LabController::class, 'addFavouirtesLab']);
+    Route::get('/getfavlab',[LabController::class, 'getFavlab']);
+    Route::get('/getLabs',[LabController::class, 'GetAllLabs']);
 
  });
 
@@ -163,5 +174,6 @@ Route::group(['prefix' => 'medicalshop'], function () {
     Route::post('/Register', [HospitalController::class, 'HospitalRegister']);
 
 });
+
 
 

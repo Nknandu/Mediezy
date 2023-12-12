@@ -25,9 +25,9 @@ class HospitalController extends BaseController
                 'firstname' => 'required',
                 'email' => 'required',
                 'password' => 'required',
-                'mobileNo'=> 'required',
-                'address'=> 'required',
-                'Type' =>'sometimes|in:1,2' //1 for hospital 2 for clinic
+                'mobileNo' => 'required',
+                'address' => 'required',
+                'Type' => 'sometimes|in:1,2' //1 for hospital 2 for clinic
 
             ]);
 
@@ -36,7 +36,7 @@ class HospitalController extends BaseController
             }
 
 
-            $emailExists =Hospital::where('email', $input['email'])->count();
+            $emailExists = Hospital::where('email', $input['email'])->count();
             $emailExistsinUser = User::where('email', $input['email'])->count();
 
             if ($emailExists && $emailExistsinUser) {
@@ -90,7 +90,8 @@ class HospitalController extends BaseController
 
 
 
-    public function AddDocter(Request $request){
+    public function AddDocter(Request $request)
+    {
 
         try {
             DB::beginTransaction();
@@ -98,12 +99,12 @@ class HospitalController extends BaseController
             $input = $request->all();
 
             $validator = Validator::make($input, [
-                'HospitalId'=>'required',
+                'HospitalId' => 'required',
                 'firstname' => 'required',
-                'secondname'=> 'required',
+                'secondname' => 'required',
                 'email' => 'required',
                 'password' => 'required',
-                'mobileNo'=> 'required',
+                'mobileNo' => 'required',
 
 
             ]);
@@ -163,13 +164,46 @@ class HospitalController extends BaseController
             DB::rollback();
             return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
         }
-
-
-
     }
 
 
 
 
+
+    public function GetAllDoctorsbyHospitalId($hospitalId)
+    {
+        $doctors = DB::table('docter')
+            ->join('Hosptal', 'docter.HospitalId', '=', 'Hosptal.UserId')
+            ->where('Hosptal.UserId', $hospitalId)
+            ->select('docter.*')
+            ->get();
+
+        return response()->json(['status' => true, 'doctors' => $doctors]);
+    }
+
+
+
+
+
+    public function GetCountOfDocter($hospitalId)
+    {
+        $doctorCount = DB::table('docter')
+            ->join('Hosptal', 'docter.HospitalId', '=', 'Hosptal.UserId')
+            ->where('Hosptal.UserId', $hospitalId)
+            ->count();
+
+        return response()->json(['status' => true, 'doctorCount' => $doctorCount]);
+    }
+
+
+    public function getAppointmentCountByHospitalId($hospitalId)
+    {
+        $appointmentCount = DB::table('token_booking')
+            ->join('Hosptal', 'token_booking.clinic_id', '=', 'Hosptal.id')
+            ->where('token_booking.clinic_id', $hospitalId)
+            ->count();
+
+        return response()->json(['status' => true, 'appointmentCount' => $appointmentCount]);
+    }
 
 }
