@@ -36,6 +36,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/specialization', [SpecificationController::class, 'index']);
 Route::get('/specialization/{id}', [SpecificationController::class, 'show']);
 
+Route::post('/patient_history', [UserController::class, 'PatientHistory']);
+
+
 Route::post('/specialization', [SpecificationController::class, 'store']);
 Route::put('/specialization/{id}', [SpecificationController::class, 'update']);
 Route::delete('/specialization/{id}', [SpecificationController::class, 'destroy']);
