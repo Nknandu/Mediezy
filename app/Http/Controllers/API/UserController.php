@@ -292,11 +292,11 @@ class UserController extends BaseController
             if (!$user) {
                 return response()->json(['status' => false, 'response' => "User not found"]);
             }
-            $patient = Patient::where('id', $request->patient_id)->where('UserId', $request->user_id)->first();
+            $patient = Patient::where('id', $request->patient_id)->first();
             if (!$patient) {
                 return response()->json(['status' => false, 'response' => "Patient not found"]);
             }
-            $document = PatientDocument::where('user_id', $request->user_id)->where('id', $request->document_id)->first();
+            $document = PatientDocument::where('user_id', $request->user_id)->where('id', $request->document_id)->where('patient_id', $request->patient_id)->first();
             if (!$document) {
                 return response()->json(['status' => false, 'response' => 'Document not found']);
             }
@@ -338,6 +338,7 @@ class UserController extends BaseController
                 $this->updateDocumentFile($request, $document, $record);
             }
             $record->save();
+            $document->patient_id = $request->patient_id ;
             $document->status = 1;
             $document->type = $type;
             $document->save();
@@ -369,6 +370,7 @@ class UserController extends BaseController
     {
         $rules = [
             'user_id'     => 'required',
+            'patient_id'  => 'required,'
         ];
         $messages = [
             'user_id.required' => 'UserId is required',
@@ -378,11 +380,8 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $user = User::where('id', $request->user_id)->first();
-            if (!$user) {
-                return response()->json(['status' => false, 'response' => "User not found"]);
-            }
-            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id);
+            $patient_doc = PatientDocument::select('id', 'user_id', 'status', 'created_at', DB::raw("CONCAT('" . asset('user/documents') . "', '/', document) AS document_path"))->where('user_id', $request->user_id)->where('patient_id',$request->patient_id);
+
             if ($request->type) {
                 $patient_doc = $patient_doc->where('type', $request->type);
             }
