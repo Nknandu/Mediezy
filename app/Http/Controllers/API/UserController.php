@@ -369,7 +369,7 @@ class UserController extends BaseController
     {
         $rules = [
             'user_id'     => 'required',
-            'patient_id'  => 'required,'
+            'patient_id'  => 'required'
         ];
         $messages = [
             'user_id.required' => 'UserId is required',
