@@ -10,7 +10,7 @@ class schedule extends Model
     use HasFactory;
     protected $table='schedule';
      protected $fillable=['id','docter_id','hospital_Id',
-    'session_title','date','startingTime','endingTime','tokens','TokenCount','created_at','timeduration','format','updated_at','scheduleupto','selecteddays','section'];
+    'session_title','date','startingTime','endingTime','tokens','TokenCount','created_at','timeduration','format','updated_at','scheduleupto','selecteddays'];
 
 
     public function docter()

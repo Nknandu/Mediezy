@@ -116,7 +116,7 @@ class ScheduleController extends BaseController
             $schedule->selecteddays = $selectdays;
             $schedule->tokens = $tokensJson;
             $schedule->hospital_Id = $request->hospital_Id;
-            $schedule->section = $request->section;
+
             // Save the schedule record
             $schedule->save();
 

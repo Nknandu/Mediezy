@@ -67,6 +67,7 @@ class TokenGenerationController extends BaseController
             $startMorningTime = $request->startingMorningTime;
             $endMorningTime = $request->endingMorningTime;
             $durationMorning = $request->morningTimeDuration;
+            $section=$request->section;
 
             // Use Carbon to parse input times for morning section
             $startTimeMorning = Carbon::createFromFormat('H:i', $startMorningTime);
@@ -80,6 +81,7 @@ class TokenGenerationController extends BaseController
 
             while ($currentTimeMorning <= $endTimeMorning) {
                 $cards[] = [
+                    'Section'=>$section,
                     'Number' => $counter, // Use the counter for auto-incrementing 'Number'
                     'Time' => $currentTimeMorning->format('H:i'),
                     'Tokens' => $currentTimeMorning->add($timeIntervalMorning)->format('H:i'),
@@ -92,9 +94,10 @@ class TokenGenerationController extends BaseController
 
             // Check if evening section is present
             if ($request->has('startingEveningTime') && $request->has('endingEveningTime') && $request->has('eveningTimeDuration')) {
-                // Reset the counter for the evening section
-                $counter = 1;
+                $startingNumberEvening = ($counter == 1) ? 1 : $counter;
 
+                // Reset the counter for the evening section
+                $counter = $startingNumberEvening;
                 $startEveningTime = $request->startingEveningTime;
                 $endEveningTime = $request->endingEveningTime;
                 $durationEvening = $request->eveningTimeDuration;

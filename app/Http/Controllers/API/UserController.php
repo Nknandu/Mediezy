@@ -13,6 +13,9 @@ use App\Models\PatientPrescriptions;
 use App\Models\Symtoms;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Models\Specialize;
+use App\Models\Specification;
+use App\Models\Subspecification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -85,7 +88,118 @@ class UserController extends BaseController
             return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
         }
     }
+    public function updateUserDetails(Request $request, $userId)
+    {
+        try {
+            DB::beginTransaction();
 
+            // Validate input
+
+
+            // Check if the user exists
+            $user = User::find($userId);
+
+            if (!$user) {
+                return $this->sendResponse(null, null, '2', 'User not found.');
+            }
+
+            // Update user details
+            $user->firstname = $request->input('firstname') ?? $user->firstname;
+            $user->secondname = $request->input('secondname') ?? $user->secondname;
+            $user->email = $request->input('email') ?? $user->email;
+            $user->mobileNo = $request->input('mobileNo') ?? $user->mobileNo;
+            $user->save();
+
+            // Update patient details
+            $patient = Patient::where('UserId', $userId)->where('user_type', 1)->first();
+
+            if (!$patient) {
+                return $this->sendResponse(null, null, '3', 'Patient not found.');
+            }
+            $patient->firstname = $request->input('firstname') ?? $patient->firstname;
+            $patient->lastname = $request->input('secondname') ?? $patient->lastname;
+            $patient->mobileNo = $request->input('mobileNo') ?? $patient->mobileNo;
+            $patient->email = $request->input('email') ?? $patient->email;
+            $patient->location = $request->input('location') ?? $patient->location;
+            if ($request->has('gender')) {
+                $patient->gender = $request->input('gender') ?? $patient->gender;
+            }
+
+
+            if ($request->hasFile('user_image')) {
+                $imageFile = $request->file('user_image');
+
+                if ($imageFile->isValid()) {
+                    $imageName = $imageFile->getClientOriginalName();
+                    $imageFile->move(public_path('UserImages'), $imageName);
+
+                    $patient->user_image = $imageName;
+                }
+            }
+
+            $patient->save();
+
+            DB::commit();
+
+            return $this->sendResponse("users", $user, '1', 'User details updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
+        }
+    }
+
+    public function UserEdit($userId)
+    {
+        $userDetails = Patient::where('UserId', $userId)->where('user_type',1)->first();
+        if (!$userDetails) {
+            $response = ['message' => 'User not found with the given UserId'];
+            return response()->json($response, 404);
+        }
+        return $this->sendResponse('Userdetails', $userDetails, '1', 'User retrieved successfully.');
+    }
+
+    public function getallfavourites($id)
+    {
+        $specializeArray['specialize'] = Specialize::all();
+        $specificationArray['specification'] = Specification::all();
+        $subspecificationArray['subspecification'] = Subspecification::all();
+
+        // Get all favorite doctors for the given user ID
+        $favoriteDoctors = Favouritestatus::where('UserId', $id)->get();
+
+        $favoriteDoctorsWithSpecifications = [];
+
+        foreach ($favoriteDoctors as $favoriteDoctor) {
+            // Fetch details for each favorite doctor
+            $doctor = Docter::Leftjoin('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
+                ->where('docter.UserId', $favoriteDoctor->doctor_id)
+                ->first();
+            $specialize = $specializeArray['specialize']->firstWhere('id', $doctor['specialization_id']);
+            if ($doctor) {
+                $id = $doctor->id;
+
+                // Initialize doctor details if not already present
+                if (!isset($favoriteDoctorsWithSpecifications[$id])) {
+                    $favoriteDoctorsWithSpecifications[$id] = [
+                        'id' => $id,
+                        'UserId' => $doctor->UserId,
+                        'firstname' => $doctor->firstname,
+                        'secondname' => $doctor->lastname,
+                        'Specialization' => $specialize ? $specialize['specialization'] : null,
+                        'DocterImage' => asset("DocterImages/images/{$doctor->docter_image}"),
+                        'Location' => $doctor->location,
+                        'MainHospital' => $doctor->Services_at,
+
+                    ];
+                }
+            }
+        }
+
+        // Format the output to match the expected structure
+        $formattedOutput = array_values($favoriteDoctorsWithSpecifications);
+
+        return $this->sendResponse('Favorite Doctors', $formattedOutput, '1', 'Favorite doctors retrieved successfully.');
+    }
 
 
     public function UserLogin(Request $req)
@@ -224,11 +338,7 @@ class UserController extends BaseController
         return response()->json(['status' => true, 'message' => 'favourite added successfully .']);
     }
 
-    public function getallfavourites($id)
-    {
-        $GetallFav = Favouritestatus::where('UserId', $id)->get();
-        return $this->sendResponse('favoriteDoctors', $GetallFav, '1', 'favourite retrieved successfully.');
-    }
+
 
     public function uploadDocument(Request $request)
     {
