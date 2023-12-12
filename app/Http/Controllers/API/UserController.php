@@ -150,7 +150,7 @@ class UserController extends BaseController
 
     public function UserEdit($userId)
     {
-        $userDetails = Patient::where('UserId', $userId)->where('user_type',1)->first();
+        $userDetails = Patient::where('UserId', $userId)->where('user_type', 1)->first();
         if (!$userDetails) {
             $response = ['message' => 'User not found with the given UserId'];
             return response()->json($response, 404);
@@ -669,6 +669,25 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
         }
     }
+    public function getPatients(Request $request)
+    {
+        $rules = [
+            'user_id'        => 'required',
+        ];
+        $messages = [
+            'user_id.required' => 'UserId is required',
+        ];
+        $validation = Validator::make($request->all(), $rules, $messages);
+        if ($validation->fails()) {
+            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+        }
+        try {
+            $patients = Patient::select('id','firstname','lastname','mobileNo','gender','email')->where('UserId',$request->user_id)->get();
+            return response()->json(['status' => true, 'patients_data' => $patients]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'response' => "Internal Server Error"]);
+        }
+    }
 
     public function PatientHistory(Request $request)
     {
@@ -683,10 +702,10 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $patientId = $request->patient_id ;
-            $history = PatientDocument::where('patient_id',$patientId)->with('LabReports','PatientPrescriptions')->first();
-            if(!$history){
-                $history = null ;
+            $patientId = $request->patient_id;
+            $history = PatientDocument::where('patient_id', $patientId)->with('LabReports', 'PatientPrescriptions')->first();
+            if (!$history) {
+                $history = null;
             }
             return response()->json(['status' => true, 'history_data' => $history]);
         } catch (\Exception $e) {
