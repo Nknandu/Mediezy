@@ -58,6 +58,8 @@ class TokenGenerationController extends BaseController
         }
     }
 
+
+
     public function getTodayTokens(Request $request)
     {
         // Get the authenticated user

@@ -49,6 +49,7 @@ class ScheduleController extends BaseController
                 'TokenCount' => ['max:250'],
                 'timeduration' => ['required', 'max:25'],
                 'format' => ['max:250'],
+                'section'=>['required', 'max:25']
             ]);
 
             if ($validator->fails()) {
@@ -115,7 +116,7 @@ class ScheduleController extends BaseController
             $schedule->selecteddays = $selectdays;
             $schedule->tokens = $tokensJson;
             $schedule->hospital_Id = $request->hospital_Id;
-
+            $schedule->section = $request->section;
             // Save the schedule record
             $schedule->save();
 
