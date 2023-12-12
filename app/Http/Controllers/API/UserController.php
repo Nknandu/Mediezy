@@ -234,7 +234,8 @@ class UserController extends BaseController
     {
         $rules = [
             'user_id'     => 'required',
-            'document'    => 'required|mimes:doc,docx,pdf,jpeg,png,jpg|max:2048'
+            'document'    => 'required|mimes:doc,docx,pdf,jpeg,png,jpg|max:2048',
+            'patient_id'  => 'required',
         ];
         $messages = [
             'document.required' => 'Document is required',
@@ -258,6 +259,7 @@ class UserController extends BaseController
                     $patient_doc->document = $imageName;
                 }
             }
+            $patient_doc->patient_id = $request->patient_id ;
             $patient_doc->save();
             $patient_doc->document = asset('user/documents') .'/'.$patient_doc->document ;
             return response()->json(['status' => true, 'response' => "Uploading Success", 'document' => $patient_doc ]);
@@ -292,11 +294,8 @@ class UserController extends BaseController
             if (!$user) {
                 return response()->json(['status' => false, 'response' => "User not found"]);
             }
-            $patient = Patient::where('id', $request->patient_id)->first();
-            if (!$patient) {
-                return response()->json(['status' => false, 'response' => "Patient not found"]);
-            }
-            $document = PatientDocument::where('user_id', $request->user_id)->where('id', $request->document_id)->where('patient_id', $request->patient_id)->first();
+
+            $document = PatientDocument::where('id', $request->document_id)->first();
             if (!$document) {
                 return response()->json(['status' => false, 'response' => 'Document not found']);
             }
