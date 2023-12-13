@@ -66,7 +66,7 @@ class TokenGenerationController extends BaseController
             $startMorningTime = $request->startingMorningTime;
             $endMorningTime = $request->endingMorningTime;
             $durationMorning = $request->morningTimeDuration;
-           
+
 
             // Use Carbon to parse input times for morning section
             $startTimeMorning = Carbon::createFromFormat('H:i', $startMorningTime);
@@ -122,7 +122,7 @@ class TokenGenerationController extends BaseController
                     $counter++; // Increment the counter for the next card
                 }
             }
-
+            return $cards;
             return response()->json(['cards' => $cards], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);

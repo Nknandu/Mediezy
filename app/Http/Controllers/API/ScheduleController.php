@@ -27,77 +27,39 @@ class ScheduleController extends BaseController
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function generateTokenCards(Request $request)
     {
         try {
-            $input = $request->all();
-
-            $validator = Validator::make($input, [
-                'docter_id' => ['required', 'max:25'],
-                'session_title' => ['max:250'],
-                'date' => ['required', 'max:25'],
-                'startingMorningTime' => ['max:250'],
-                'endingMorningTime' => ['max:25'],
-                'eveningstartingTime' => ['max:250'],
-                'eveningendingTime' => ['max:25'],
-                'TokenCount' => ['max:250'],
-                'format' => ['max:250'],
-
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError('Validation Error', $validator->errors());
-            }
-
-            // Use a transaction to ensure atomicity (all-or-nothing)
-            DB::beginTransaction();
-
-            $existingSchedule = Schedule::where('docter_id', $request->docter_id)
-                ->where('hospital_Id', $request->hospital_Id)
-                ->first();
-
-            // Delete the existing schedule if found
-            if ($existingSchedule) {
-                $existingSchedule->delete();
-            }
-
-            $tokens = [];
+            $cards = [];
             $counter = 1; // Initialize the counter before the loop
             if ($request->has('startingMorningTime') && $request->has('endingMorningTime') && $request->has('morningTimeDuration')) {
-                $startMorningTime = $request->startingMorningTime;
-                $endMorningTime = $request->endingMorningTime;
-                $durationMorning = $request->morningTimeDuration;
+            $startMorningTime = $request->startingMorningTime;
+            $endMorningTime = $request->endingMorningTime;
+            $durationMorning = $request->morningTimeDuration;
 
-                // Use Carbon to parse input times for morning section
-                $startTimeMorning = Carbon::createFromFormat('H:i', $startMorningTime);
-                $endTimeMorning = Carbon::createFromFormat('H:i', $endMorningTime);
 
-                // Calculate the time interval based on the duration for morning section
-                $timeIntervalMorning = new DateInterval('PT' . $durationMorning . 'M');
+            // Use Carbon to parse input times for morning section
+            $startTimeMorning = Carbon::createFromFormat('H:i', $startMorningTime);
+            $endTimeMorning = Carbon::createFromFormat('H:i', $endMorningTime);
 
-                // Generate tokens for morning section at regular intervals
-                $currentTimeMorning = clone $startTimeMorning; // Use clone to avoid modifying the original object
+            // Calculate the time interval based on the duration for morning section
+            $timeIntervalMorning = new DateInterval('PT' . $durationMorning . 'M');
 
-                while ($currentTimeMorning <= $endTimeMorning) {
-                    $tokens[] = [
-                        'Number' => $counter, // Use the counter for auto-incrementing 'Number'
-                        'Time' => $currentTimeMorning->format('H:i'),
-                        'Tokens' => $currentTimeMorning->add($timeIntervalMorning)->format('H:i'),
-                        'is_booked' => 0,
-                        'is_cancelled' => 0
-                    ];
+            // Generate tokens for morning section at regular intervals
+            $currentTimeMorning = $startTimeMorning;
 
-                    $counter++; // Increment the counter for the next token
-                }
+            while ($currentTimeMorning <= $endTimeMorning) {
+                $cards[] = [
+                    'Number' => $counter, // Use the counter for auto-incrementing 'Number'
+                    'Time' => $currentTimeMorning->format('H:i'),
+                    'Tokens' => $currentTimeMorning->add($timeIntervalMorning)->format('H:i'),
+                    'is_booked' => 0,
+                    'is_cancelled' => 0
+                ];
+
+                $counter++; // Increment the counter for the next card
             }
+        }
             // Check if evening section is present
             if ($request->has('startingEveningTime') && $request->has('endingEveningTime') && $request->has('eveningTimeDuration')) {
                 $startingNumberEvening = ($counter == 1) ? 1 : $counter;
@@ -119,7 +81,7 @@ class ScheduleController extends BaseController
                 $currentTimeEvening = $startTimeEvening;
 
                 while ($currentTimeEvening <= $endTimeEvening) {
-                    $tokens[] = [
+                    $cards[] = [
                         'Number' => $counter, // Use the counter for auto-incrementing 'Number'
                         'Time' => $currentTimeEvening->format('H:i'),
                         'Tokens' => $currentTimeEvening->add($timeIntervalEvening)->format('H:i'),
@@ -130,6 +92,52 @@ class ScheduleController extends BaseController
                     $counter++; // Increment the counter for the next card
                 }
             }
+            return $cards;
+            return response()->json(['cards' => $cards], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            $validator = Validator::make($input, [
+                'docter_id' => ['required', 'max:25'],
+                'session_title' => ['max:250'],
+                'date' => ['required', 'max:25'],
+                'startingMorningTime' => ['max:250'],
+                'endingMorningTime' => ['max:25'],
+                'startingEveningTime' => ['max:250'],
+                'endingEveningTime' => ['max:25'],
+                'TokenCount' => ['max:250'],
+                'format' => ['max:250'],
+
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', $validator->errors());
+            }
+
+            // Use a transaction to ensure atomicity (all-or-nothing)
+            DB::beginTransaction();
+
+            $existingSchedule = Schedule::where('docter_id', $request->docter_id)
+                ->where('hospital_Id', $request->hospital_Id)
+                ->first();
+
+            // Delete the existing schedule if found
+            if ($existingSchedule) {
+                $existingSchedule->delete();
+            }
+
+            //$tokens = [];
+            $tokens = $this->generateTokenCards($request);
+            
 
             $inputDate = Carbon::parse($request->date);
             $oneYearLater = $inputDate->addYear();
@@ -145,8 +153,8 @@ class ScheduleController extends BaseController
             $schedule->date = $request->date;
             $schedule->startingTime = $request->startingMorningTime;
             $schedule->endingTime = $request->endingMorningTime;
-            $schedule->eveningstartingTime = $request->eveningstartingTime;
-            $schedule->eveningendingTime = $request->eveningendingTime;
+            $schedule->eveningstartingTime = $request->startingEveningTime;
+            $schedule->eveningendingTime = $request->endingEveningTime;
             $schedule->TokenCount = $request->TokenCount;
             $schedule->timeduration = $request->morningTimeDuration;
             $schedule->eveningTimeDuration = $request->eveningTimeDuration;
