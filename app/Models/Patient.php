@@ -20,4 +20,14 @@ class Patient extends Model
     'UserId',
     'created_at',
     'updated_at','user_type'];
+
+     // Accessor for the 'username' attribute
+     public function getGenderAttribute($value)
+     {
+         return ucwords($value);
+     }
 }
+
+
+
+
