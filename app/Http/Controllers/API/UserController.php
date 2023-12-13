@@ -585,6 +585,10 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
+            $patient_detail = Patient::where('user_type',1)->first();
+            if($patient_detail){
+                return response()->json(['status' => false, 'response' => "A profile is already in self"]);
+            }
             $user = User::where('id', $request->user_id)->first();
             if (!$user) {
                 return response()->json(['status' => false, 'response' => "User not found"]);
@@ -597,7 +601,7 @@ class UserController extends BaseController
                 $msg = "Member added successfully";
             }
             $patient->firstname = $request->first_name;
-            $patient->firstname = $request->first_name;
+            $patient->lastname = $request->last_name;
             $patient->gender    = $request->gender;
             $patient->user_type = $request->relation;
             $patient->email     = $request->email;
@@ -683,6 +687,7 @@ class UserController extends BaseController
         }
         try {
             $patients = Patient::select('id','firstname','lastname','mobileNo','gender','email')->where('UserId',$request->user_id)->get();
+
             return response()->json(['status' => true, 'patients_data' => $patients]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
