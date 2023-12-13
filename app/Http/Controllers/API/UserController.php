@@ -585,9 +585,11 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $patient_detail = Patient::where('user_type',1)->first();
-            if($patient_detail){
-                return response()->json(['status' => false, 'response' => "A profile is already in self"]);
+            if($request->relation == '1'){
+                $patient_detail = Patient::where('user_type',1)->first();
+                if($patient_detail){
+                    return response()->json(['status' => false, 'response' => "A profile is already in self"]);
+                }
             }
             $user = User::where('id', $request->user_id)->first();
             if (!$user) {
@@ -647,7 +649,6 @@ class UserController extends BaseController
             $address->city          = $request->city;
             $address->state         = $request->state;
             $address->save();
-
             return response()->json(['status' => true, 'response' => $msg]);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'response' => "Internal Server Error"]);
