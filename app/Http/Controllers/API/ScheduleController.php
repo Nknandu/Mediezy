@@ -44,12 +44,13 @@ class ScheduleController extends BaseController
                 'docter_id' => ['required', 'max:25'],
                 'session_title' => ['max:250'],
                 'date' => ['required', 'max:25'],
-                'startingTime' => ['max:250'],
-                'endingTime' => ['required', 'max:25'],
+                'startingMorningTime' => ['max:250'],
+                'endingMorningTime' => [ 'max:25'],
+                'eveningstartingTime' => ['max:250'],
+                'eveningendingTime' => ['max:25'],
                 'TokenCount' => ['max:250'],
-                'timeduration' => ['required', 'max:25'],
                 'format' => ['max:250'],
-                'section'=>['required', 'max:25']
+
             ]);
 
             if ($validator->fails()) {
@@ -68,38 +69,14 @@ class ScheduleController extends BaseController
             $existingSchedule->delete();
         }
 
-            $tokens = [];
-            $counter = 1; // Initialize the counter before the loop
 
-            $startDateTime = $request->startingTime;
-            $endDateTime = $request->endingTime;
-            $duration = $request->timeduration;
 
-            // Use Carbon to parse input times
-            $startTime = Carbon::createFromFormat('H:i', $startDateTime);
-            $endTime = Carbon::createFromFormat('H:i', $endDateTime);
-
-            // Calculate the time interval based on the duration
-            $timeInterval = new DateInterval('PT' . $duration . 'M');
-
-            // Generate tokens at regular intervals
-            $currentTime = $startTime;
-
-            while ($currentTime <= $endTime) {
-                $tokens[] = [
-                    'Number' => $counter, // Use the counter for auto-incrementing 'Number'
-                    'Time' => $currentTime->format('H:i'),
-                    'Tokens' => $currentTime->add($timeInterval)->format('H:i')
-                ];
-
-                $counter++; // Increment the counter for the next card
-            }
 
             $inputDate = Carbon::parse($request->date);
             $oneYearLater = $inputDate->addYear();
             $oneYearLaterString = $oneYearLater->toDateString();
 
-            $tokensJson = json_encode($tokens);
+            $tokensJson = json_encode($request->tokens);
             $selectdays = json_encode($request->selecteddays);
 
             // Create a new schedule record
@@ -107,10 +84,13 @@ class ScheduleController extends BaseController
             $schedule->docter_id = $request->docter_id;
             $schedule->session_title = $request->session_title;
             $schedule->date = $request->date;
-            $schedule->startingTime = $request->startingTime;
-            $schedule->endingTime = $request->endingTime;
+            $schedule->startingTime = $request->startingMorningTime;
+            $schedule->endingTime = $request->endingMorningTime;
+            $schedule->eveningstartingTime = $request->eveningstartingTime;
+            $schedule->eveningendingTime = $request->eveningendingTime;
             $schedule->TokenCount = $request->TokenCount;
-            $schedule->timeduration = $request->timeduration;
+            $schedule->timeduration = $request->morningTimeDuration;
+            $schedule->eveningTimeDuration = $request->eveningTimeDuration;
             $schedule->format = $request->format;
             $schedule->scheduleupto = $oneYearLaterString;
             $schedule->selecteddays = $selectdays;

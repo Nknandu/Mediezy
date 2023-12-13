@@ -167,10 +167,12 @@ Route::group(['prefix' => 'medicalshop'], function () {
 //Laboratory
  Route::group(['prefix' => 'Lab'], function () {
     Route::post('/LabRegister', [LabController::class, 'LabRegister']);
+    
     Route::post('/Test',[LabController::class, 'LabTest']);
     Route::get('/getalllab',[LabController::class, 'GetLabForDoctors']);
     Route::get('/getallScanningCenter',[LabController::class, 'GetScanningForDoctors']);
     Route::post('/addfavLab',[LabController::class, 'addFavouirtesLab']);
+    Route::post('/RemovefavLab',[LabController::class, 'RemoveFavouirtesLab']);
     Route::get('/getfavlab',[LabController::class, 'getFavlab']);
     Route::get('/getLabs',[LabController::class, 'GetAllLabs']);
 

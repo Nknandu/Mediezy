@@ -172,7 +172,7 @@ class MedicalshopController extends BaseController
 
             $favoriteStatus = DB::table('favouirtes_shop')
             ->where('doctor_id', $loggedInDoctorId)
-            ->where('medicalshop_id', $Medicalshops->id)
+            ->where('medicalshop_id', $Medicalshop->id)
             ->exists();
 
               $MedicalshopDetails[] = [
@@ -276,5 +276,5 @@ class MedicalshopController extends BaseController
         }
     }
 
-    
+
 }
