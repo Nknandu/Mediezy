@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('docter_id')->nullable()->default(0);
             $table->string('hospital_Name');
-            $table->string('availability');
+            $table->string('startingTime');
+            $table->string('endingTime');
             $table->timestamps();
         });
     }

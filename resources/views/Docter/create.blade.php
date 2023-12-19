@@ -121,19 +121,36 @@
                         </div>
 
                         <div class="hospital-container">
-                            <div class="col-xl-6 col-lg-6 col-12 mb-3 hospital-row">
+                            <div class="col-xl-12 col-lg-12 col-12 mb-3 hospital-row">
                                 <div class="row">
-                                    <div class="col-xl-6 col-lg-6 col-12 mb-3">
+                                    <div class="col-xl-3 col-lg-6 col-12 mb-3">
                                         <label class="mt-1 mb-1 inputlabel formlabel" for="hospitalName">Hospital
                                             Name</label>
                                         <input type="text" class="form-control mt-1 inputfield" id="hospitalName"
                                             name="hospitalName" placeholder="" autofocus>
                                     </div>
-                                    <div class="col-xl-5 col-lg-5 col-11 mb-3">
+                                    <div class="col-xl-1 col-lg-4 col-11 mb-3">
                                         <label class="mt-1 mb-1 inputlabel formlabel"
-                                            for="availability">Availability</label>
-                                        <input type="text" class="form-control mt-1 inputfield" id="availability"
-                                            name="availability" placeholder="" autofocus>
+                                            for="startingTime">Starting</label>
+                                        <input type="text" class="form-control mt-1 inputfield" id="startingTime"
+                                            name="startingTime" placeholder="" autofocus>
+                                    </div>
+                                    <div class="col-xl-1 col-lg-4 col-11 mb-3">
+                                        <label class="mt-1 mb-1 inputlabel formlabel"
+                                            for="endingtime">Ending</label>
+                                        <input type="text" class="form-control mt-1 inputfield" id="endingtime"
+                                            name="endingtime" placeholder="" autofocus>
+                                    </div>
+                                    <div class="col-xl-3 col-lg-6 col-12 mb-3">
+                                        <label class="mt-1 mb-1 inputlabel formlabel" for="hospitalName">Hospital
+                                            Address</label>
+                                        <input type="text" class="form-control mt-1 inputfield" id="hospitalAddress"
+                                            name="hospitalAddress" placeholder="" autofocus>
+                                    </div>
+                                    <div class="col-xl-3 col-lg-6 col-12 mb-3">
+                                        <label class="mt-1 mb-1 inputlabel formlabel" for="hospitalName">Location</label>
+                                        <input type="text" class="form-control mt-1 inputfield" id="hospitalLocation"
+                                            name="hospitalLocation" placeholder="" autofocus>
                                     </div>
                                     <div class="col-1 d-flex align-items-center">
                                         <span class="add-icon" onclick="addHospitalRow()"><i class="bi bi-patch-plus-fill"></i></span>
@@ -269,25 +286,43 @@
 
         function addHospitalRow() {
             const hospitalNameInput = document.getElementById("hospitalName");
-            const availabilityInput = document.getElementById("availability");
+            const StartingTimeInput = document.getElementById("startingTime");
+            const EndingTimeInput = document.getElementById("endingtime");
+            const hospitalAddressInput = document.getElementById("hospitalAddress");
+            const LocationInput = document.getElementById("hospitalLocation");
 
             const hospitalName = hospitalNameInput.value;
-            const availability = availabilityInput.value;
+            const startingTime = StartingTimeInput.value;
+            const endingTime = EndingTimeInput.value;
+            const hospitalAddress = hospitalAddressInput.value;
+            const hospitalLocation = LocationInput.value;
 
-            if (hospitalName && availability) {
+            if (hospitalName && startingTime) {
                 // Create a new row with the entered data
                 const newRow = document.createElement("div");
-                newRow.classList.add("col-xl-6", "col-lg-6", "col-12", "mb-3", "hospital-row");
+                newRow.classList.add("col-xl-12", "col-lg-12", "col-12", "mb-3", "hospital-row");
 
                 newRow.innerHTML = `
             <div class="row">
-                <div class="col-xl-6 col-lg-6 col-12 mb-3">
+                <div class="col-xl-3 col-lg-4 col-12 mb-3">
                     <label class="mt-1 mb-1 inputlabel formlabel">Hospital Name</label>
                     <input type="text" class="form-control mt-1 inputfield" value="${hospitalName}" readonly>
                 </div>
-                <div class="col-xl-5 col-lg-5 col-11 mb-3">
-                    <label class="mt-1 mb-1 inputlabel formlabel">Availability</label>
-                    <input type="text" class="form-control mt-1 inputfield" value="${availability}" readonly>
+                <div class="col-xl-1 col-lg-4 col-12 mb-3">
+                    <label class="mt-1 mb-1 inputlabel formlabel">starting</label>
+                    <input type="text" class="form-control mt-1 inputfield" value="${startingTime}" readonly>
+                </div>
+                <div class="col-xl-1 col-lg-4 col-12 mb-3">
+                    <label class="mt-1 mb-1 inputlabel formlabel">Ending</label>
+                    <input type="text" class="form-control mt-1 inputfield" value="${endingTime}" readonly>
+                </div>
+                <div class="col-xl-3 col-lg-4 col-12 mb-3">
+                    <label class="mt-1 mb-1 inputlabel formlabel">Hospital Address</label>
+                    <input type="text" class="form-control mt-1 inputfield" value="${hospitalAddress}" readonly>
+                </div>
+                <div class="col-xl-3 col-lg-5 col-11 mb-3">
+                    <label class="mt-1 mb-1 inputlabel formlabel">Location</label>
+                    <input type="text" class="form-control mt-1 inputfield" value="${hospitalLocation}" readonly>
                 </div>
             </div>
         `;
@@ -298,12 +333,19 @@
                 // Push the data into the hospitals array
                 hospitals.push({
                     hospitalName,
-                    availability
+                    startingTime,
+                    endingTime,
+                    hospitalAddress,
+                    hospitalLocation
+
                 });
                 console.log(hospitals)
                 // Clear the input fields
                 hospitalNameInput.value = "";
-                availabilityInput.value = "";
+                StartingTimeInput.value = "";
+                EndingTimeInput.value = "";
+                hospitalAddressInput.value = "";
+                hospitalLocation.value = "";
             }
         }
 

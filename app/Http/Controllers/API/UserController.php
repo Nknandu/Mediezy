@@ -34,6 +34,19 @@ class UserController extends BaseController
 
             $input = $request->all();
 
+            $validator = Validator::make($input, [
+                'firstname' => 'required|string',
+                'secondname' => 'required|string',
+                'mobileNo' => 'required',
+                'gender' => 'required',
+                'age' => 'required',
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+            }
             $emailExists = Patient::where('email', $input['email'])->count();
             $emailExistsinUser = User::where('email', $input['email'])->count();
 
@@ -59,6 +72,7 @@ class UserController extends BaseController
                 'mobileNo' => $input['mobileNo'],
                 'email' => $input['email'],
                 'location' => $input['location'],
+                'age' => $input['age'],
                 'gender' => $input['gender'],
                 'UserId' => $userId,
             ];

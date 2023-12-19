@@ -81,6 +81,8 @@ class MedicalshopController extends BaseController
             $Medicalshop->save();
             DB::commit();
 
+
+
             return $this->sendResponse("Medicalshop", $Medicalshop, '1', 'Medicalshop created successfully.');
         } catch (\Exception $e) {
             DB::rollback();
@@ -223,8 +225,15 @@ class MedicalshopController extends BaseController
             return response()->json(['error' => 'Medicalshop not found'], 404);
         }
 
+        $existingFavourite = FavouriteShop::where('medicalshop_id', $MediShop)
+        ->where('doctor_id', $docterId)
+        ->first();
 
 
+        if ($existingFavourite) {
+            // Laboratory is already a favorite for the doctor
+            return response()->json(['status' => false, 'message' => 'Medicalshop is already saved as a favorite.']);
+        }
 
         $addfav = new FavouriteShop();
         $addfav->medicalshop_id = $MediShop;
@@ -296,7 +305,7 @@ class MedicalshopController extends BaseController
 
                 $Medicalshops->where('firstname', 'like', '%' . $request->searchTerm . '%')
                     ->orWhere('location', 'like', '%' . $request->searchTerm . '%');
-            
+
 
             $MedicalshopDetails = [];
 
