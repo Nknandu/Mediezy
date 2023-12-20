@@ -9,5 +9,5 @@ class DocterAvailability extends Model
 {
     use HasFactory;
     protected $table='docteravaliblity';
-    protected $fillable=['id','docter_id','hospital_Name','availability'];
+    protected $fillable=['id','docter_id','hospital_Name','startingTime','endingTime','address','location'];
 }

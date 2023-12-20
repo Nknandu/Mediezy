@@ -145,7 +145,7 @@ class TokenBookingController extends BaseController
     {
         // Replace this with your actual logic to retrieve clinic details from the database
         // You may use Eloquent queries or another method based on your application structure
-        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'availability']);
+        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'startingTime','endingTime','address','location']);
 
         return $clinics;
     }
@@ -319,8 +319,9 @@ class TokenBookingController extends BaseController
                 return response()->json(['status' => false, 'response' => "Booking not found"]);
             }
             $symptoms = json_decode($booking->Appoinmentfor_id, true);
-            $booking['main_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor1'])->get()->toArray();
-            $booking['other_symptoms'] = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor2'])->get()->toArray();
+            $mainSymptoms = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor1'])->get()->toArray();
+            $otherSymptoms = Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor2'])->get()->toArray();
+            $booking['main_symptoms'] = array_merge($mainSymptoms, $otherSymptoms);
             $booking['medicine']       = Medicine::where('token_id', $tokenId)->get();
             return response()->json(['status' => true, 'booking_data' => $booking, 'message' => 'Success']);
         } catch (\Exception $e) {

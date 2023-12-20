@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\API\BaseController;
 use App\Models\Docter;
 use App\Models\Hospital;
+use App\Models\Medicalshop;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,81 @@ class HospitalController extends BaseController
             return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
         }
     }
+
+
+    public function AddMedicalshop(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $input = $request->all();
+            $validator = Validator::make($input, [
+                'HospitalId' => 'required',
+                'firstname' => 'required',
+                'email' => 'required',
+                'password' => 'required',
+                'mobileNo' => 'required',
+                'address' => 'required',
+
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', $validator->errors());
+            }
+
+            $emailExists = Medicalshop::where('email', $input['email'])->count();
+            $emailExistsinUser = User::where('email', $input['email'])->count();
+
+            if ($emailExists && $emailExistsinUser) {
+                return $this->sendResponse("Laboratory", null, '3', 'Email already exists.');
+            }
+
+            $input['password'] = Hash::make($input['password']);
+
+            $userId = DB::table('users')->insertGetId([
+                'firstname' => $input['firstname'],
+                'secondname' => 'Medicalshop',
+                'email' => $input['email'],
+                'password' => $input['password'],
+                'mobileNo' => $input['mobileNo'],
+                'user_role' => 5,
+            ]);
+
+            $DocterData = [
+                'HospitalId' => $input['HospitalId'],
+                'firstname' => $input['firstname'],
+                'mobileNo' => $input['mobileNo'],
+                'email' => $input['email'],
+                'location' => $input['location'],
+                'address' => $input['address'],
+                'UserId' => $userId,
+            ];
+
+            if ($request->hasFile('shop_image')) {
+                $imageFile = $request->file('shop_image');
+
+                if ($imageFile->isValid()) {
+                    $imageName = $imageFile->getClientOriginalName();
+                    $imageFile->move(public_path('shopImages/images'), $imageName);
+
+                    $DocterData['shop_image'] = $imageName;
+                }
+            }
+
+            $Medicalshop = new Medicalshop($DocterData);
+            $Medicalshop->save();
+            DB::commit();
+
+
+
+            return $this->sendResponse("Medicalshop", $Medicalshop, '1', 'Medicalshop created successfully.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage(), $errorMessages = [], $code = 404);
+        }
+
+    }
+
 
 
 

@@ -86,7 +86,10 @@ class DocterController extends BaseController
             $doctersWithSpecifications[$id]['clincs'][] = [
                 'id'  => $doctor['avaliblityId'],
                 'name' => $doctor['hospital_Name'],
-                'availability' => $doctor['availability'],
+                'StartingTime' => $doctor['startingTime'],
+                'EndingTime' => $doctor['endingTime'],
+                'Address' => $doctor['address'],
+                'Location' => $doctor['location'],
             ];
         }
 
@@ -105,7 +108,7 @@ class DocterController extends BaseController
         $subspecificationArray['subspecification'] = Subspecification::all();
 
         $docters = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
-            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.startingTime','docteravaliblity.endingTime','docteravaliblity.address','docteravaliblity.location')
             ->get();
 
         $doctersWithSpecifications = [];
@@ -164,7 +167,10 @@ class DocterController extends BaseController
             $doctersWithSpecifications[$id]['clincs'][] = [
                 'id'  => $doctor['avaliblityId'],
                 'name' => $doctor['hospital_Name'],
-                'availability' => $doctor['availability'],
+                'StartingTime' => $doctor['startingTime'],
+                'EndingTime' => $doctor['endingTime'],
+                'Address' => $doctor['address'],
+                'Location' => $doctor['location'],
             ];
         }
 
@@ -243,7 +249,10 @@ class DocterController extends BaseController
                     $availabilityData = [
                         'docter_id' => $Docter->id,
                         'hospital_Name' => $hospital['hospitalName'],
-                        'availability' => $hospital['availability'],
+                        'startingTime' => $hospital['startingTime'],
+                        'endingTime' => $hospital['endingTime'],
+                        'address' => $hospital['hospitalAddress'],
+                        'location' => $hospital['hospitalLocation'],
                     ];
 
                     // Create and save DocterAvailability records
@@ -277,7 +286,8 @@ class DocterController extends BaseController
 
         $docters = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
             ->join('users', 'docter.UserId', '=', 'users.id') // Assuming 'UserId' is the foreign key in the 'Docter' table
-            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')            ->where('users.id', $userId) // Filtering by UserId from the User table
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.startingTime','docteravaliblity.endingTime','docteravaliblity.address','docteravaliblity.location')
+            ->where('users.id', $userId) // Filtering by UserId from the User table
             ->get();
 
 
@@ -338,7 +348,10 @@ class DocterController extends BaseController
             $doctersWithSpecifications[$id]['clincs'][] = [
                 'id'  => $doctor['avaliblityId'],
                 'name' => $doctor['hospital_Name'],
-                'availability' => $doctor['availability'],
+                'StartingTime' => $doctor['startingTime'],
+                'EndingTime' => $doctor['endingTime'],
+                'Address' => $doctor['address'],
+                'Location' => $doctor['location'],
             ];
         }
 
@@ -424,7 +437,7 @@ class DocterController extends BaseController
 
         $doctors = Docter::join('docteravaliblity', 'docter.id', '=', 'docteravaliblity.docter_id')
             ->where('docter.specialization_id', $specializationId)
-            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.availability')
+            ->select('docter.UserId', 'docter.id', 'docter.docter_image', 'docter.firstname', 'docter.lastname', 'docter.specialization_id', 'docter.subspecification_id', 'docter.specification_id', 'docter.about', 'docter.location', 'docteravaliblity.id as avaliblityId', 'docter.gender', 'docter.email', 'docter.mobileNo', 'docter.Services_at', 'docteravaliblity.hospital_Name', 'docteravaliblity.startingTime','docteravaliblity.endingTime','docteravaliblity.address','docteravaliblity.location')
             ->get();
 
         $doctorsWithSpecifications = [];
@@ -489,6 +502,25 @@ class DocterController extends BaseController
 
         return response()->json($result);
     }
+    public function getHospitalDetailsById($hospitalId)
+{
+    // Query the DocterAvailability table to get hospital details based on the provided hospitalId
+    $hospitalDetails = DocterAvailability::find($hospitalId);
+
+    if (is_null($hospitalDetails)) {
+        return response()->json(['error' => 'Hospital not found for the given Hospital ID'], 404);
+    }
+
+
+    // Combine hospital details with doctor details
+    $result = [
+        'clinic_details' => $hospitalDetails,
+
+    ];
+
+    return response()->json($result);
+}
+
 
     public function ApproveOrReject(Request $request)
     {
@@ -529,70 +561,175 @@ class DocterController extends BaseController
         return response()->json(['symptoms' => $symptoms], 200);
     }
 
+    // public function getTokens(Request $request)
+    // {
+    //     $rules = [
+    //         'doctor_id'     => 'required',
+    //         'hospital_id'   => 'required',
+    //         'date'          => 'required',
+    //     ];
+    //     $messages = [
+    //         'date.required' => 'Date is required',
+    //     ];
+    //     $validation = Validator::make($request->all(), $rules, $messages);
+    //     if ($validation->fails()) {
+    //         return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
+    //     }
+    //     try {
+    //         $docter = Docter::where('id', $request->doctor_id)->first();
+    //         if (!$docter) {
+    //             return response()->json(['status' => false, 'message' => 'Doctor not found']);
+    //         }
+    //         $shedulded_tokens =  schedule::where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
+    //         if (!$shedulded_tokens) {
+    //             return response()->json(['status' => false, 'message' => 'Data not found']);
+    //         }
+    //         $requestDate = Carbon::parse($request->date);
+    //         $startDate = Carbon::parse($shedulded_tokens->date);
+    //         $scheduledUptoDate = Carbon::parse($shedulded_tokens->scheduleupto);
+    //         // Get the day of the week
+    //         $dayOfWeek = $requestDate->format('l'); // 'l' format gives the full name of the day
+    //         $allowedDaysArray = json_decode($shedulded_tokens->selecteddays);
+    //         $token_booking = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->get();
+
+    //         if (!$requestDate->between($startDate, $scheduledUptoDate)) {
+    //             return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this date']);
+    //         }
+
+    //         if (!in_array($dayOfWeek, $allowedDaysArray)) {
+    //             return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this day']);
+    //         }
+
+    //         $shedulded_tokens =  schedule::select('id', 'tokens', 'date', 'hospital_Id', 'startingTime', 'endingTime')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
+    //         $shedulded_tokens['tokens'] = json_decode($shedulded_tokens->tokens);
+
+
+    //         $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date', $request->date)->first();
+
+    //         if ($today_schedule) {
+    //             $today_schedule['startingTime'] = $shedulded_tokens->startingTime;
+    //             $today_schedule['endingTime']   = $shedulded_tokens->endingTime;
+    //             $shedulded_tokens = $today_schedule;
+    //             $shedulded_tokens['tokens'] = json_decode($today_schedule->tokens);
+    //         }
+
+    //         foreach ($shedulded_tokens['tokens'] as $token) {
+    //             // Set is_booked to 1 (or any other value you want)
+    //             $token_booking = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->where('TokenTime', $token->Time)->where('TokenNumber', $token->Number)->first();
+    //             if ($token_booking) {
+    //                 $token->is_booked = 1;
+    //             }
+    //         }
+    //         return response()->json(['status' => true, 'token_data' => $shedulded_tokens]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['status' => false, 'message' => "Internal Server Error"]);
+    //     }
+    // }
+
+
     public function getTokens(Request $request)
-    {
-        $rules = [
-            'doctor_id'     => 'required',
-            'hospital_id'   => 'required',
-            'date'          => 'required',
-        ];
-        $messages = [
-            'date.required' => 'Date is required',
-        ];
-        $validation = Validator::make($request->all(), $rules, $messages);
-        if ($validation->fails()) {
-            return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
-        }
-        try {
-            $docter = Docter::where('id', $request->doctor_id)->first();
-            if (!$docter) {
-                return response()->json(['status' => false, 'message' => 'Doctor not found']);
-            }
-            $shedulded_tokens =  schedule::where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
-            if (!$shedulded_tokens) {
-                return response()->json(['status' => false, 'message' => 'Data not found']);
-            }
-            $requestDate = Carbon::parse($request->date);
-            $startDate = Carbon::parse($shedulded_tokens->date);
-            $scheduledUptoDate = Carbon::parse($shedulded_tokens->scheduleupto);
-            // Get the day of the week
-            $dayOfWeek = $requestDate->format('l'); // 'l' format gives the full name of the day
-            $allowedDaysArray = json_decode($shedulded_tokens->selecteddays);
-            $token_booking = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->get();
-
-            if (!$requestDate->between($startDate, $scheduledUptoDate)) {
-                return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this date']);
-            }
-
-            if (!in_array($dayOfWeek, $allowedDaysArray)) {
-                return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this day']);
-            }
-
-            $shedulded_tokens =  schedule::select('id', 'tokens', 'date', 'hospital_Id', 'startingTime', 'endingTime')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->first();
-            $shedulded_tokens['tokens'] = json_decode($shedulded_tokens->tokens);
-
-
-            $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')->where('docter_id', $request->doctor_id)->where('hospital_Id', $request->hospital_id)->where('date', $request->date)->first();
-
-            if ($today_schedule) {
-                $today_schedule['startingTime'] = $shedulded_tokens->startingTime;
-                $today_schedule['endingTime']   = $shedulded_tokens->endingTime;
-                $shedulded_tokens = $today_schedule;
-                $shedulded_tokens['tokens'] = json_decode($today_schedule->tokens);
-            }
-
-            foreach ($shedulded_tokens['tokens'] as $token) {
-                // Set is_booked to 1 (or any other value you want)
-                $token_booking = TokenBooking::where('date', $request->date)->where('doctor_id', $request->doctor_id)->where('clinic_id', $request->hospital_id)->where('TokenTime', $token->Time)->where('TokenNumber', $token->Number)->first();
-                if ($token_booking) {
-                    $token->is_booked = 1;
-                }
-            }
-            return response()->json(['status' => true, 'token_data' => $shedulded_tokens]);
-        } catch (\Exception $e) {
-            return response()->json(['status' => false, 'message' => "Internal Server Error"]);
-        }
+{
+    $rules = [
+        'doctor_id'     => 'required',
+        'hospital_id'   => 'required',
+        'date'          => 'required',
+    ];
+    $messages = [
+        'date.required' => 'Date is required',
+    ];
+    $validation = Validator::make($request->all(), $rules, $messages);
+    if ($validation->fails()) {
+        return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
     }
+
+    try {
+        $doctor = Docter::where('id', $request->doctor_id)->first();
+        if (!$doctor) {
+            return response()->json(['status' => false, 'message' => 'Doctor not found']);
+        }
+
+        $scheduledTokens = schedule::where('docter_id', $request->doctor_id)
+            ->where('hospital_Id', $request->hospital_id)
+            ->first();
+
+        if (!$scheduledTokens) {
+            return response()->json(['status' => false, 'message' => 'Data not found']);
+        }
+
+        $requestDate = Carbon::parse($request->date);
+        $startDate = Carbon::parse($scheduledTokens->date);
+        $scheduledUptoDate = Carbon::parse($scheduledTokens->scheduleupto);
+
+        // Get the day of the week
+        $dayOfWeek = $requestDate->format('l'); // 'l' format gives the full name of the day
+        $allowedDaysArray = json_decode($scheduledTokens->selecteddays);
+        $tokenBooking = TokenBooking::where('date', $request->date)
+            ->where('doctor_id', $request->doctor_id)
+            ->where('clinic_id', $request->hospital_id)
+            ->get();
+
+        if (!$requestDate->between($startDate, $scheduledUptoDate)) {
+            return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this date']);
+        }
+
+        if (!in_array($dayOfWeek, $allowedDaysArray)) {
+            return response()->json(['status' => true, 'token_data' => null, 'message' => 'Token not found on this day']);
+        }
+
+        $scheduledTokens = schedule::select('id', 'tokens', 'date', 'hospital_Id', 'startingTime', 'endingTime')
+            ->where('docter_id', $request->doctor_id)
+            ->where('hospital_Id', $request->hospital_id)
+            ->first();
+
+        $scheduledTokens['tokens'] = json_decode($scheduledTokens->tokens);
+
+        $todaySchedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')
+            ->where('docter_id', $request->doctor_id)
+            ->where('hospital_Id', $request->hospital_id)
+            ->where('date', $request->date)
+            ->first();
+
+        if ($todaySchedule) {
+            $todaySchedule['startingTime'] = $scheduledTokens->startingTime;
+            $todaySchedule['endingTime']   = $scheduledTokens->endingTime;
+            $scheduledTokens = $todaySchedule;
+            $scheduledTokens['tokens'] = json_decode($todaySchedule->tokens);
+        }
+
+        $morningTokens = [];
+        $eveningTokens = [];
+
+        foreach ($scheduledTokens['tokens'] as $token) {
+            // Set is_booked to 1 (or any other value you want)
+            $tokenBooking = TokenBooking::where('date', $request->date)
+                ->where('doctor_id', $request->doctor_id)
+                ->where('clinic_id', $request->hospital_id)
+                ->where('TokenTime', $token->Time)
+                ->where('TokenNumber', $token->Number)
+                ->first();
+
+            $token->is_booked = $tokenBooking ? 1 : 0;
+
+            // Categorize tokens into morning and evening
+            if (Carbon::parse($token->Time) < Carbon::parse('13:00:00')) {
+                $morningTokens[] = $token;
+            } else {
+                $eveningTokens[] = $token;
+            }
+        }
+        $token_Data = new \stdClass(); // Create a new object to store token data
+        $token_Data->morning_tokens = $morningTokens;
+        $token_Data->evening_tokens = $eveningTokens;
+
+        return response()->json([
+            'status' => true,
+            'token_data' => $token_Data,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['status' => false, 'message' => "Internal Server Error"]);
+    }
+}
+
     public function getDoctorLeaveList(Request $request)
     {
         $rules = [

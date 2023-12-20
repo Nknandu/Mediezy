@@ -16,11 +16,12 @@ use Illuminate\Http\Request;
 class AppoinmentsController extends BaseController
 {
 
+
     private function getClinics($doctorId)
     {
         // Replace this with your actual logic to retrieve clinic details from the database
         // You may use Eloquent queries or another method based on your application structure
-        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'availability']);
+        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'startingTime','endingTime','address','location']);
 
         return $clinics;
     }
@@ -113,12 +114,14 @@ class AppoinmentsController extends BaseController
                 ->where('patient.UserId', $doctor->UserId)
                 ->orderBy('token_booking.date', 'asc')
                 ->where('Is_completed', 0)
+                ->distinct()
                 ->get(['token_booking.*', 'docter.*']);
 
-                if ($appointments->isEmpty()) {
 
-                    return $this->sendResponse('Appointments', null, '1', 'No appointments found for the patient.');
-                }
+            if ($appointments->isEmpty()) {
+
+                return $this->sendResponse('Appointments', null, '1', 'No appointments found for the patient.');
+            }
 
             // Initialize an array to store appointments along with doctor details
             $appointmentsWithDetails = [];
@@ -170,30 +173,34 @@ class AppoinmentsController extends BaseController
                 $appointmentDetails = [
                     'TokenNumber' => $appointment->TokenNumber,
                     'Date' => $appointment->date,
-                    'Startingtime' => $appointment->TokenTime,
+                    'Startingtime' => Carbon::parse($appointment->TokenTime)->format('g:i'),
                     'PatientName' => $appointment->PatientName,
                     'main_symptoms' => Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor1'])->get()->toArray(),
                     'other_symptoms' => Symtoms::select('id', 'symtoms')->whereIn('id', $symptoms['Appoinmentfor2'])->get()->toArray(),
                     'TokenBookingDate' => Carbon::parse($appointment->Bookingtime)->toDateString(),
                     'TokenBookingTime' => Carbon::parse($appointment->Bookingtime)->toTimeString(),
-                    'ConsultationStartsfrom' => $firstTime,
+                    'ConsultationStartsfrom' => Carbon::parse($firstTime)->format('g:i'),
                     'DoctorEarlyFor' => intval($DocterEarly), // Convert to integer
                     'DoctorLateFor' => intval($DocterLate), // Convert to integer
                 ];
 
                 $previousAppointment = Patient::join('token_booking', 'token_booking.BookedPerson_id', '=', 'patient.UserId')
-    ->join('docter', 'docter.UserId', '=', 'token_booking.doctor_id')
-    ->where('patient.UserId', $doctor->UserId)
-    ->where('token_booking.date', '<', now()) // Assuming 'date' is the timestamp field
-    ->orderBy('token_booking.date', 'desc')
-    ->where('Is_completed', 1) // Assuming 'Is_completed' is a flag indicating a completed appointment
-    ->first(['token_booking.*', 'docter.*']);
+                    ->join('docter', 'docter.UserId', '=', 'token_booking.doctor_id')
+                    ->where('patient.UserId', $doctor->UserId)
+                    ->where('token_booking.date', '<', now()) // Assuming 'date' is the timestamp field
+                    ->orderBy('token_booking.date', 'desc')
+                    ->where('Is_completed', 1) // Assuming 'Is_completed' is a flag indicating a completed appointment
+                    ->first(['token_booking.*', 'docter.*']);
 
 
 
-if ($previousAppointment) {
-    $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->format('g:i');
-}
+                    if ($previousAppointment) {
+                        // If there is a previous appointment, set estimateTime to 20 minutes earlier than checkout time
+                        $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->subMinutes(20)->format('g:i');
+                    } else {
+                        // If there is no previous appointment, set estimateTime to 20 minutes earlier than the current appointment's start time
+                        $appointmentDetails['estimateTime'] = Carbon::parse($appointment->TokenTime)->subMinutes(20)->format('g:i');
+                    }
 
                 // Extract doctor details from the first appointment (assuming all appointments have the same doctor details)
                 $doctorDetails = [
@@ -228,6 +235,7 @@ if ($previousAppointment) {
         }
     }
 
+
     private function getCurrentOngoingToken($appointments)
     {
         // Get the current date
@@ -238,6 +246,7 @@ if ($previousAppointment) {
 
             $currentOngoingToken = TokenBooking::where('doctor_id', $doctorId)
                 ->where('Is_checkIn', 1)
+                ->where('Is_completed', 1)
                 ->where('date', $currentDate)
                 ->orderBy('TokenNumber', 'ASC')
                 ->pluck('TokenNumber');
@@ -249,5 +258,4 @@ if ($previousAppointment) {
 
         return null;
     }
-
 }

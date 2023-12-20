@@ -101,6 +101,7 @@ Route::post('/generate-cards', [TokenGenerationController::class, 'generateToken
 Route::get('/generate-cards', [TokenGenerationController::class, 'generateTokenCards']);
 Route::middleware('auth:api')->get('/today-schedule', [TokenGenerationController::class, 'getTodayTokens']);
 Route::get('/get-hospital-name/{doctor_id}', [DocterController::class, 'getHospitalName']);
+Route::get('/gethospitalbyId/{id}', [DocterController::class, 'getHospitalDetailsById']);
 Route::post('/approveorreject', [DocterController::class, 'ApproveOrReject']);
 //login with token
 Route::post('/auth/register', [AuthController::class, 'register']);

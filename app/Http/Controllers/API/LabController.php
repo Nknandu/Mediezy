@@ -154,7 +154,7 @@ class LabController extends BaseController
             return $this->sendError('Error', $e->getMessage(), 500);
         }
     }
-//get all the lab for docter App
+    //get all the lab for docter App
     public function GetLabForDoctors()
     {
         if (Auth::check()) {
@@ -220,29 +220,57 @@ class LabController extends BaseController
     public function GetAllLabs()
     {
         $Laboratories = Laboratory::where('Type', 1)->get();
-            $LaboratoryDetails = [];
+        $LaboratoryDetails = [];
 
-            foreach ($Laboratories as $Laboratory) {
+        foreach ($Laboratories as $Laboratory) {
 
-                $LaboratoryDetails[] = [
-                    'id' => $Laboratory->id,
-                    'UserId' => $Laboratory->UserId,
-                    'Laboratory' => $Laboratory->firstname,
-                    'Laboratoryimage' => asset("LabImages/{$Laboratory->lab_image}"),
-                    'mobileNo' => $Laboratory->mobileNo,
-                    'location' => $Laboratory->location,
+            $LaboratoryDetails[] = [
+                'id' => $Laboratory->id,
+                'UserId' => $Laboratory->UserId,
+                'Laboratory' => $Laboratory->firstname,
+                'Laboratoryimage' => asset("LabImages/{$Laboratory->lab_image}"),
+                'mobileNo' => $Laboratory->mobileNo,
+                'location' => $Laboratory->location,
 
-                ];
-            }
+            ];
+        }
 
-            return $this->sendResponse("Laboratory", $LaboratoryDetails, '1', 'Laboratory retrieved successfully');
-
+        return $this->sendResponse("Laboratory", $LaboratoryDetails, '1', 'Laboratory retrieved successfully');
     }
 
 
     public function addFavouirtesLab(Request $request)
     {
+        $doctorId = $request->doctor_id;
+        $labId = $request->lab_id;
 
+        $laboratory = Laboratory::find($labId);
+
+        if (!$laboratory) {
+            return response()->json(['error' => 'Laboratory not found'], 404);
+        }
+
+        // Check if the laboratory is already a favorite for the doctor
+        $existingFavorite = FavouriteLab::where('lab_id', $labId)
+            ->where('doctor_id', $doctorId)
+            ->first();
+
+        if ($existingFavorite) {
+            // Laboratory is already a favorite for the doctor
+            return response()->json(['status' => false, 'message' => 'Laboratory is already saved as a favorite.']);
+        }
+
+        // If not already a favorite, add it to the favorites list
+        $addFavorite = new FavouriteLab();
+        $addFavorite->lab_id = $labId;
+        $addFavorite->doctor_id = $doctorId;
+        $addFavorite->save();
+
+        return response()->json(['status' => true, 'message' => 'Laboratory added to favorites successfully.']);
+    }
+
+    public function RemoveFavouirtesLab(Request $request)
+    {
         $docterId = $request->doctor_id;
         $LabId = $request->lab_id;
         $Laboratory = Laboratory::find($LabId);
@@ -250,37 +278,15 @@ class LabController extends BaseController
         if (!$Laboratory) {
             return response()->json(['error' => 'Laboratory not found'], 404);
         }
+        $existingFavourite = FavouriteLab::where('lab_id', $LabId)
+            ->where('doctor_id', $docterId)
+            ->first();
 
-
-
-
-
-            $addfav = new FavouriteLab();
-            $addfav->lab_id = $LabId;
-            $addfav->doctor_id = $docterId;
-            $addfav->save();
-
-
-        return response()->json(['status' => true, 'message' => 'favourite added successfully .']);
+        if ($existingFavourite) {
+            FavouriteLab::where('doctor_id', $docterId)->where('lab_id', $LabId)->delete();
+            return response()->json(['status' => true, 'message' => 'favourite Removed successfully .']);
+        }
     }
-
-public function RemoveFavouirtesLab(Request $request){
-    $docterId = $request->doctor_id;
-    $LabId = $request->lab_id;
-    $Laboratory = Laboratory::find($LabId);
-
-    if (!$Laboratory) {
-        return response()->json(['error' => 'Laboratory not found'], 404);
-    }
-    $existingFavourite = FavouriteLab::where('lab_id', $LabId)
-    ->where('doctor_id', $docterId)
-    ->first();
-
-if ($existingFavourite) {
-    FavouriteLab::where('doctor_id', $docterId)->where('lab_id', $LabId)->delete();
-    return response()->json(['status' => true, 'message' => 'favourite Removed successfully .']);
-}
-}
 
     public function getFavlab()
     {
@@ -289,9 +295,9 @@ if ($existingFavourite) {
             $loggedInDoctorId = Auth::user()->id;
 
             $favoriteLabs = FavouriteLab::leftJoin('laboratory', 'laboratory.id', '=', 'favouriteslab.lab_id')
-            ->where('doctor_id', $loggedInDoctorId)
-            ->select('laboratory.*')
-            ->get();
+                ->where('doctor_id', $loggedInDoctorId)
+                ->select('laboratory.*')
+                ->get();
 
             $LaboratoryDetails = [];
 
@@ -311,14 +317,4 @@ if ($existingFavourite) {
             return response()->json(['status' => false, 'message' => 'User not authenticated.']);
         }
     }
-
-
-
-
-
-
-
-
-
-
 }
