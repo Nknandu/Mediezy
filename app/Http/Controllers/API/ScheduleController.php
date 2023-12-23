@@ -286,231 +286,7 @@ class ScheduleController extends BaseController
 
 
 
-    /**
-     * Display the specified resource.
-     */
 
-    // public function show($date)
-    // {
-    //     // Check if the user is authenticated
-    //     if (Auth::check()) {
-    //         // Get the logged-in user
-    //         $user = Auth::user();
-
-    //         // Find the schedule for the logged-in user based on the given date
-    //         $schedule = Schedule::where('docter_id', $user->id)
-    //                             ->where('date', '<=', $date)
-    //                             ->where('scheduleupto', '>=', $date)
-    //                             ->first();
-
-    //         if (is_null($schedule)) {
-    //             return $this->sendError('Schedule not found for the given date.');
-    //         }
-
-    //         // Convert the selecteddays string to an array after removing quotes and extra spaces
-    //         $selectedDaysArray = array_map('trim', explode(',', str_replace(['[', ']', '"'], '', $schedule->selecteddays)));
-
-    //         // Set the transformed selecteddays array back to the schedule
-    //         $schedule->selecteddays = $selectedDaysArray;
-
-    //         // Decode the tokens JSON string
-    //         $tokensArray = json_decode($schedule->tokens, true);
-
-    //         // Transform the tokens array structure
-    //         $transformedTokens = array_map(function($token) {
-    //             return [
-    //                 'Number' => $token['Number'],
-    //                 'StartingTime' => $token['Time'],
-    //                 'EndingTime' => $token['Tokens'],
-    //             ];
-    //         }, $tokensArray);
-
-    //         // Set the transformed tokens array back to the schedule
-    //         $schedule->tokens = $transformedTokens;
-
-    //         // Return the modified response
-    //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
-    //     } else {
-    //         // Handle the case where the user is not authenticated
-    //         return $this->sendError('User not authenticated.', [], 401);
-    //     }
-    // }
-
-    // date-22/11/2023
-    // public function show($date)
-    // {
-    //     // Check if the user is authenticated
-    //     if (Auth::check()) {
-    //         // Get the logged-in user
-    //         $user = Auth::user();
-
-    //         // Find the schedule for the logged-in user based on the given date
-    //         $schedule = Schedule::where('docter_id', $user->id)
-    //                             ->where('date', '<=', $date)
-    //                             ->where('scheduleupto', '>=', $date)
-    //                             ->first();
-
-    //         if (is_null($schedule)) {
-    //             return $this->sendError('Schedule not found for the given date.');
-    //         }
-
-    //         // Convert the selecteddays string to an array after removing quotes and extra spaces
-    //         $selectedDaysArray = array_map('trim', explode(',', str_replace(['[', ']', '"'], '', $schedule->selecteddays)));
-
-    //         // Check if the given date falls on a selected day
-    //         $givenDateDay = date('l', strtotime($date));
-    //         if (!in_array(strtolower($givenDateDay), $selectedDaysArray)) {
-    //             return $this->sendError('Schedule not available for the given date.');
-    //         }
-
-    //         // Decode the tokens JSON string
-    //         $tokensArray = json_decode($schedule->tokens, true);
-
-    //         // Transform the tokens array structure
-    //         $transformedTokens = array_map(function($token) {
-    //             return [
-    //                 'Number' => $token['Number'],
-    //                 'StartingTime' => $token['Time'],
-    //                 'EndingTime' => $token['Tokens'],
-    //             ];
-    //         }, $tokensArray);
-
-    //         // Set the transformed tokens array back to the schedule
-    //         $schedule->tokens = $transformedTokens;
-
-    //         // Return the modified response
-    //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
-    //     } else {
-    //         // Handle the case where the user is not authenticated
-    //         return $this->sendError('User not authenticated.', [], 401);
-    //     }
-    // }
-    // public function show($date)
-    // {
-    //     // Check if the user is authenticated
-    //     if (Auth::check()) {
-    //         // Get the logged-in user
-    //         $user = Auth::user();
-
-    //         // Find the schedule for the logged-in user based on the given date
-    //         $schedule = Schedule::where('docter_id', $user->id)
-    //                             ->where('date', '<=', $date)
-    //                             ->where('scheduleupto', '>=', $date)
-    //                             ->first();
-
-    //         if (is_null($schedule)) {
-    //             return $this->sendError('Schedule not found for the given date.');
-    //         }
-
-    //         // Decode the selecteddays JSON string
-    //         $selectedDaysArray = json_decode($schedule->selecteddays, true);
-
-    //         // Check if the given date falls on a selected day
-    //         $givenDateDay = date('l', strtotime($date));
-    //         if (!in_array($givenDateDay, $selectedDaysArray)) {
-    //             return $this->sendResponse("schedule", null, '1', 'Schedule not available for the given date.');
-    //         }
-
-    //         // Decode the tokens JSON string
-    //         $tokensArray = json_decode($schedule->tokens, true);
-
-    //         // Transform the tokens array structure
-    //         $transformedTokens = array_map(function($token) {
-    //             $isBooked = isset($token['is_booked']) ? $token['is_booked'] : null;
-    //             $iscancelled = isset($token['is_cancelled']) ? $token['is_cancelled'] : null;
-    //             return [
-    //                 'Number' => $token['Number'],
-    //                 'StartingTime' => $token['Time'],
-    //                 'EndingTime' => $token['Tokens'],
-    //                 'Is_booked' => $isBooked,
-    //                 'is_cancelled' => $iscancelled
-    //             ];
-    //         }, $tokensArray);
-
-    //         // Set the transformed tokens array back to the schedule
-    //         $schedule->tokens = $transformedTokens;
-
-    //         // Return the modified response
-    //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
-    //     } else {
-    //         // Handle the case where the user is not authenticated
-    //         return $this->sendError('User not authenticated.', [], 40g
-
-    // public function show($date, $clinic_id)
-    // {
-    //     // Check if the user is authenticated
-    //     if (Auth::check()) {
-    //         // Get the logged-in user
-    //         $user = Auth::user();
-
-    //         // Find the schedule for the logged-in user based on the given date
-    //         $schedule = Schedule::where('docter_id', $user->id)
-    //             ->where('date', '<=', $date)
-    //             ->where('hospital_Id', '<=', $clinic_id)
-    //             ->where('scheduleupto', '>=', $date)
-    //             ->first();
-
-    //         if (is_null($schedule)) {
-    //             return $this->sendError('Schedule not found for the given date.');
-    //         }
-
-    //         // Decode the selecteddays JSON string
-    //         $selectedDaysArray = json_decode($schedule->selecteddays, true);
-
-    //         // Check if the given date falls on a selected day
-    //         $givenDateDay = date('l', strtotime($date));
-    //         if (!in_array($givenDateDay, $selectedDaysArray)) {
-    //             return $this->sendResponse("schedule", null, '1', 'Schedule not available for the given date.');
-    //         }
-
-    //         // Decode the tokens JSON string
-    //         $tokensArray = json_decode($schedule->tokens, true);
-
-    //         // Get doctor appointments from the token_booking table for the given date
-    //         $appointments = TokenBooking::where('doctor_id', $user->id)
-    //             ->whereDate('date', $date)
-    //             ->get();
-
-
-    //         $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')
-    //             ->where('docter_id',  $user->id)
-    //             ->where('hospital_Id', $clinic_id)
-    //             ->where('date', $date)
-    //             ->first();
-
-    //         if ($today_schedule) {
-    //             $tokensArray = json_decode($today_schedule->tokens, true);
-    //         }
-
-
-    //         $transformedTokens = array_map(function ($token) use ($appointments) {
-    //             $matchingAppointment = $appointments->first(function ($appointment) use ($token) {
-    //                 return $appointment->TokenNumber == $token['Number'] && $appointment->TokenTime == $token['Time'];
-    //             });
-
-    //             // Add debug information
-    //             if ($matchingAppointment) {
-    //                 info("Matching appointment found for TokenNumber: {$token['Number']}, TokenTime: {$token['Time']}");
-    //             }
-    //             return [
-    //                 'Number' => $token['Number'],
-    //                 'StartingTime' => $token['Time'],
-    //                 'EndingTime' => $token['Tokens'],
-    //                 'Is_booked' => $matchingAppointment ? 1 : 0,
-    //                 'is_cancelled' => isset($token['is_cancelled']) ? $token['is_cancelled'] : null,
-    //             ];
-    //         }, $tokensArray);
-
-    //         // Set the transformed tokens array back to the schedule
-    //         $schedule->tokens = $transformedTokens;
-
-    //         // Return the modified response
-    //         return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
-    //     } else {
-    //         // Handle the case where the user is not authenticated
-    //         return $this->sendError('User not authenticated.', [], 401);
-    //     }
-    // }
 
     public function show($date, $clinic_id)
     {
@@ -521,7 +297,7 @@ class ScheduleController extends BaseController
 
             // Find the schedule for the logged-in user based on the given date
             $schedule = Schedule::where('docter_id', $user->id)
-                ->where('hospital_Id',$clinic_id )
+                ->where('hospital_Id', $clinic_id)
                 ->where('date', '<=', $date)
                 ->where('scheduleupto', '>=', $date)
                 ->first();
@@ -538,22 +314,7 @@ class ScheduleController extends BaseController
                 return $this->sendResponse("schedule", null, '1', 'Schedule not available for the given date.');
             }
 
-            // Decode the tokens JSON string
-            $tokensArray = json_decode($schedule->tokens, true);
-
-            // Filter tokens for morning and evening
-            $morningTokens = array_filter($tokensArray, function ($token) {
-                return strtotime($token['Time']) < strtotime('13:00');
-            });
-
-            $eveningTokens = array_filter($tokensArray, function ($token) {
-                return strtotime($token['Time']) >= strtotime('13:00');
-            });
-
-            // Get doctor appointments from the token_booking table for the given date
-            $appointments = TokenBooking::where('doctor_id', $user->id)
-                ->whereDate('date', $date)
-                ->get();
+            $schedule['tokens'] = json_decode($schedule->tokens);
 
             $today_schedule = TodaySchedule::select('id', 'tokens', 'date', 'hospital_Id')
                 ->where('docter_id',  $user->id)
@@ -562,26 +323,49 @@ class ScheduleController extends BaseController
                 ->first();
 
             if ($today_schedule) {
-                $tokensArray = json_decode($today_schedule->tokens, true);
+                $schedule = $today_schedule;
+                $schedule['tokens'] = json_decode($today_schedule->tokens);
             }
 
-            // Transform morning tokens
-            $transformedMorningTokens = $this->transformTokens($morningTokens, $appointments);
+            $morningTokens = [];
+            $eveningTokens = [];
 
-            // Transform evening tokens
-            $transformedEveningTokens = $this->transformTokens(array_values($eveningTokens), $appointments);
+            foreach ($schedule['tokens'] as $token) {
+                // Set is_booked to 1 (or any other value you want)
+                $tokenBooking = TokenBooking::where('date', $date)
+                    ->where('clinic_id', $clinic_id)
+                    ->where('TokenTime', $token->Time)
+                    ->where('TokenNumber', $token->Number)
+                    ->first();
 
-            // Set the transformed tokens arrays back to the schedule
-            $schedule->morning_tokens = $transformedMorningTokens;
-            $schedule->evening_tokens = array_values($transformedEveningTokens);
+                $token->is_booked = $tokenBooking ? 1 : 0;
+
+                // Categorize tokens into morning and evening
+                if (Carbon::parse($token->Time) < Carbon::parse('13:00:00')) {
+                    $morningTokens[] = $token;
+                } else {
+                    $eveningTokens[] = $token;
+                }
+            }
+
+            $tokenData = new \stdClass(); // Create a new object to store token data
+            $tokenData->morning_tokens = $morningTokens;
+            $tokenData->evening_tokens = $eveningTokens;
+            $tokenData->hospitalId = $clinic_id; // Add hospital_id to the token data
 
             // Return the modified response
-            return $this->sendResponse("schedule", $schedule, '1', 'Schedule retrieved successfully.');
+            return response()->json([
+                'status' => true,
+                'schedule' => $tokenData,
+                'message' => 'Schedule retrieved successfully.',
+            ]);
         } else {
             // Handle the case where the user is not authenticated
             return $this->sendError('User not authenticated.', [], 401);
         }
     }
+
+
 
     // Helper function to transform tokens
     private function transformTokens($tokensArray, $appointments)

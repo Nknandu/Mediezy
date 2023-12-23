@@ -107,8 +107,8 @@ Route::post('/approveorreject', [DocterController::class, 'ApproveOrReject']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/TokenBooking', [TokenBookingController::class, 'bookToken']);
-Route::get('/getallappointments/{userId}/{date}', [TokenBookingController::class, 'GetallAppointmentOfDocter']);
-Route::get('/getallcompletedappointments/{userId}/{date}', [TokenBookingController::class, 'GetallAppointmentOfDocterCompleted']);
+Route::get('/getallappointments/{userId}/{date}/{clinicid}', [TokenBookingController::class, 'GetallAppointmentOfDocter']);
+Route::get('/getallcompletedappointments/{userId}/{date}/{clinicid}', [TokenBookingController::class, 'GetallAppointmentOfDocterCompleted']);
 
 Route::group(['prefix' => 'user'], function () {
     Route::any('/get_docter_tokens', [DocterController::class, 'getTokens']);
