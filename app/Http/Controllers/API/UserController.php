@@ -238,11 +238,12 @@ class UserController extends BaseController
     }
 
 
+
     private function getClinics($doctorId)
     {
         // Replace this with your actual logic to retrieve clinic details from the database
         // You may use Eloquent queries or another method based on your application structure
-        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'availability']);
+        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'startingTime', 'endingTime', 'address', 'location']);
 
         return $clinics;
     }
@@ -269,6 +270,7 @@ class UserController extends BaseController
                 ->where('patient.UserId', $doctor->UserId)
                 ->orderByRaw('CAST(token_booking.TokenNumber AS SIGNED) ASC')
                 ->where('Is_completed', 1)
+                ->distinct()
                 ->get(['token_booking.*', 'docter.*']);
 
             // Initialize an array to store appointments along with doctor details
@@ -359,7 +361,7 @@ class UserController extends BaseController
         $rules = [
             'user_id'     => 'required',
             'document'    => 'required|mimes:doc,docx,pdf,jpeg,png,jpg|max:2048',
-            'patient_id'  => 'required',
+
         ];
         $messages = [
             'document.required' => 'Document is required',
@@ -586,10 +588,9 @@ class UserController extends BaseController
         $rules = [
             'user_id'     => 'required',
             'first_name'  => 'required',
-            'last_name'   => 'required',
             'gender'      => 'required|in:1,2,3',
             'relation'    => 'required|in:1,2,3',
-            'email'       => 'required|email'
+               'age' => 'required'
         ];
         $messages = [
             'user_id.required' => 'UserId is required',
@@ -599,9 +600,9 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            if($request->relation == '1'){
-                $patient_detail = Patient::where('user_type',1)->first();
-                if($patient_detail){
+            if ($request->relation == '1') {
+                $patient_detail = Patient::where('user_type', 1)->first();
+                if ($patient_detail) {
                     return response()->json(['status' => false, 'response' => "A profile is already in self"]);
                 }
             }
@@ -619,6 +620,7 @@ class UserController extends BaseController
             $patient->firstname = $request->first_name;
             $patient->lastname = $request->last_name;
             $patient->gender    = $request->gender;
+            $patient->age    = $request->age;
             $patient->user_type = $request->relation;
             $patient->email     = $request->email;
             $patient->UserId    = $request->user_id;
@@ -701,7 +703,7 @@ class UserController extends BaseController
             return response()->json(['status' => false, 'response' => $validation->errors()->first()]);
         }
         try {
-            $patients = Patient::select('id','firstname','lastname','mobileNo','gender','email')->where('UserId',$request->user_id)->get();
+            $patients = Patient::select('id', 'firstname', 'mobileNo', 'gender', 'email', 'age')->where('UserId', $request->user_id)->get();
 
             return response()->json(['status' => true, 'patients_data' => $patients]);
         } catch (\Exception $e) {

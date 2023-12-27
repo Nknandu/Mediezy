@@ -113,6 +113,7 @@ class TokenBookingController extends BaseController
                     'date' => $request->input('date'),
                     'TokenNumber' => $request->input('TokenNumber'),
                     'TokenTime' => $request->input('TokenTime'),
+                    'EndTokenTime' => $request->input('EndTokenTime'),
                     'doctor_id' => $request->input('doctor_id'),
                     'whenitstart' => $request->input('whenitstart'),
                     'whenitcomes' => $request->input('whenitcomes'),
@@ -150,7 +151,7 @@ class TokenBookingController extends BaseController
         return $clinics;
     }
 
-    public function GetallAppointmentOfDocter($userId, $date)//datewise where completed is 0
+    public function GetallAppointmentOfDocter($userId, $date,$clinicId)//datewise where completed is 0
     {
         try {
             // Get the currently authenticated doctor
@@ -164,6 +165,7 @@ class TokenBookingController extends BaseController
 
             // Get all appointments for the doctor on the selected date
             $appointments = Docter::join('token_booking', 'token_booking.doctor_id', '=', 'docter.UserId')
+            ->where('token_booking.clinic_id', $clinicId)
             ->where('docter.UserId', $doctor->UserId)
             ->whereDate('token_booking.date', $date)
             ->orderByRaw('CAST(token_booking.TokenNumber AS SIGNED) ASC')
@@ -226,7 +228,7 @@ class TokenBookingController extends BaseController
 
 
 
-    public function GetallAppointmentOfDocterCompleted($userId, $date)//datewise where completed is 1
+    public function GetallAppointmentOfDocterCompleted($userId, $date,$clinicId)//datewise where completed is 1
     {
         try {
             // Get the currently authenticated doctor
@@ -240,6 +242,7 @@ class TokenBookingController extends BaseController
 
             // Get all appointments for the doctor on the selected date
             $appointments = Docter::join('token_booking', 'token_booking.doctor_id', '=', 'docter.UserId')
+            ->where('token_booking.clinic_id', $clinicId)
             ->where('docter.UserId', $doctor->UserId)
             ->whereDate('token_booking.date', $date)
             ->orderByRaw('CAST(token_booking.TokenNumber AS SIGNED) ASC')

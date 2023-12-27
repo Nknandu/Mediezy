@@ -15,6 +15,7 @@ class Patient extends Model
     'user_image',
     'mobileNo',
     'gender',
+    'age',
     'location',
     'email',
     'UserId',

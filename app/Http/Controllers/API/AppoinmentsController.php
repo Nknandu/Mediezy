@@ -21,7 +21,7 @@ class AppoinmentsController extends BaseController
     {
         // Replace this with your actual logic to retrieve clinic details from the database
         // You may use Eloquent queries or another method based on your application structure
-        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'startingTime','endingTime','address','location']);
+        $clinics = DocterAvailability::where('docter_id', $doctorId)->get(['id', 'hospital_Name', 'startingTime', 'endingTime', 'address', 'location']);
 
         return $clinics;
     }
@@ -96,13 +96,17 @@ class AppoinmentsController extends BaseController
     //     }
     // }
 
+
+
+
+
     public function GetUserAppointments(Request $request, $userId)
     {
         try {
             // Get the currently authenticated patient
-            $doctor = Patient::where('UserId', $userId)->first();
+            $patient = Patient::where('UserId', $userId)->first();
 
-            if (!$doctor) {
+            if (!$patient) {
                 return response()->json(['message' => 'Patient not found.'], 404);
             }
 
@@ -111,7 +115,7 @@ class AppoinmentsController extends BaseController
             // Get all appointments for the doctor on the selected date
             $appointments = Patient::join('token_booking', 'token_booking.BookedPerson_id', '=', 'patient.UserId')
                 ->join('docter', 'docter.UserId', '=', 'token_booking.doctor_id') // Join the doctor table
-                ->where('patient.UserId', $doctor->UserId)
+                ->where('patient.UserId', $patient->UserId)
                 ->orderBy('token_booking.date', 'asc')
                 ->where('Is_completed', 0)
                 ->distinct()
@@ -136,7 +140,7 @@ class AppoinmentsController extends BaseController
             $ClinicId = $firstAppointment->clinic_id;
             $currentDate = Carbon::now()->toDateString();
             // Get the doctor's schedule for the current date
-            $doctorSchedule = Schedule::where('docter_id', $doctorId)
+            $doctorSchedule = Schedule::where('docter_id', $doctorId)->where('hospital_Id', $ClinicId)
                 ->get();
             $tokensJson = $doctorSchedule->first()->tokens;
             $tokensArray = json_decode($tokensJson, true);
@@ -162,12 +166,119 @@ class AppoinmentsController extends BaseController
                 }
             }
 
+            $doctorSchedule = Schedule::where('docter_id', $doctorId)->where('hospital_Id', $ClinicId)->get();
+
+            $morningEvneningTokens = $doctorSchedule->first()->tokens;
+            $tokens = json_decode($morningEvneningTokens, true);
+            $tokenCount = count($tokens);
 
 
+            $TokenArray = TokenBooking::where('doctor_id', $doctorId)
+                ->whereDate('Bookingtime', '=', now()->toDateString())
+                ->select('checkinTime', 'checkoutTime')
+                ->selectRaw('CAST(TokenNumber AS SIGNED) AS token')
+                ->orderby('token', 'asc')
+                ->get()->toArray();
+
+            if (!empty($TokenArray)) {
+
+                $existingTokens = array_column($TokenArray, "token");
+
+                for ($i = 1; $i <= $tokenCount; $i++) {
+                    if (!in_array($i, $existingTokens)) {
+                        $TokenArray[] = [
+                            "checkinTime" => null,
+                            "checkoutTime" => null,
+                            "token" => $i
+                        ];
+                    }
+                }
+                // Sort the array based on the "token" value in ascending order
+                usort($TokenArray, function ($a, $b) {
+                    return $a['token'] - $b['token'];
+                });
+
+
+
+                $foundKey = 0;
+
+                foreach ($TokenArray as $key => $TokenArrays) {
+                    if ($TokenArrays["checkinTime"] === null && $TokenArrays["checkoutTime"] === null) {
+                        $foundKey = $key;
+                        break;  // Stop searching after the first occurrence
+                    }
+                }
+
+                $dateNow = date('Y-m-d');
+                $newkey = $foundKey - 1;
+
+                if ($newkey >= 0) {
+
+                    $tokenStart = $tokens[$newkey]['Time'];
+                    $tokenStartDateString = $dateNow . ' ' . $tokenStart;
+                    $tokenEnd = $tokens[$newkey]['Tokens'];
+                    $tokenEndDateString = $dateNow . ' ' . $tokenEnd;
+                    $checkInString = $TokenArray[$newkey]['checkinTime'];
+                    $checkOutString = $TokenArray[$newkey]['checkoutTime'];
+                    $checkIn = Carbon::parse($checkInString);
+                    $checkOut = Carbon::parse($checkOutString);
+                    $tokenStartDate = Carbon::parse($tokenStartDateString);
+                    $tokenEndDate = Carbon::parse($tokenEndDateString);
+
+
+
+                    if ($checkInString !== null && $checkOutString == null) {
+
+                        if ($tokenStartDate->greaterThan($checkIn)) {
+                            $difference = -$tokenStartDate->diffInSeconds($checkIn);
+                        } elseif ($tokenStartDate->lessThan($checkIn)) {
+                            $difference = $checkIn->diffInSeconds($tokenStartDate);
+                        } else {
+                            $difference = 0;
+                        }
+
+                        $patientsDelay = $difference;
+                    } elseif ($checkInString !== null && $checkOutString !== null ) {
+                        if ($tokenEndDate->greaterThan($checkOut)) {
+                            $endDifference = -$tokenEndDate->diffInSeconds($checkOut);
+                        } elseif ($tokenEndDate->lessThan($checkOut)) {
+                            $endDifference = $checkOut->diffInSeconds($tokenEndDate);
+                        } else {
+                            $endDifference = 0;
+                        }
+                        //$patientsDelay += $endDifference;
+                        $patientsDelay = $endDifference;
+                    }
+                } else {
+                    $patientsDelay = 0;
+                }
+
+            } else {
+                $patientsDelay = 0;
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            $appointmentsWithDetails = [];
+            $DocterEarly = 0;
+            $DocterLate = 0;
+
+
+                    $DelayTime=20*60;
             // Iterate through each appointment and add symptoms information
             foreach ($appointments as $key => $appointment) {
                 $symptoms = json_decode($appointment->Appoinmentfor_id, true);
-
 
                 // Extract appointment details
                 $appointmentDetails = [
@@ -182,25 +293,9 @@ class AppoinmentsController extends BaseController
                     'ConsultationStartsfrom' => Carbon::parse($firstTime)->format('g:i'),
                     'DoctorEarlyFor' => intval($DocterEarly), // Convert to integer
                     'DoctorLateFor' => intval($DocterLate), // Convert to integer
+
+                    'estimateTime' =>  Carbon::parse($appointment->TokenTime)->addSeconds($patientsDelay)->subSeconds($DelayTime)->format('g:i A')
                 ];
-
-                $previousAppointment = Patient::join('token_booking', 'token_booking.BookedPerson_id', '=', 'patient.UserId')
-                    ->join('docter', 'docter.UserId', '=', 'token_booking.doctor_id')
-                    ->where('patient.UserId', $doctor->UserId)
-                    ->where('token_booking.date', '<', now()) // Assuming 'date' is the timestamp field
-                    ->orderBy('token_booking.date', 'desc')
-                    ->where('Is_completed', 1) // Assuming 'Is_completed' is a flag indicating a completed appointment
-                    ->first(['token_booking.*', 'docter.*']);
-
-
-
-                    if ($previousAppointment) {
-                        // If there is a previous appointment, set estimateTime to 20 minutes earlier than checkout time
-                        $appointmentDetails['estimateTime'] = Carbon::parse($previousAppointment->checkoutTime)->subMinutes(20)->format('g:i');
-                    } else {
-                        // If there is no previous appointment, set estimateTime to 20 minutes earlier than the current appointment's start time
-                        $appointmentDetails['estimateTime'] = Carbon::parse($appointment->TokenTime)->subMinutes(20)->format('g:i');
-                    }
 
                 // Extract doctor details from the first appointment (assuming all appointments have the same doctor details)
                 $doctorDetails = [
@@ -214,11 +309,8 @@ class AppoinmentsController extends BaseController
                     'specification_id' => $appointment->specification_id,
                     'specifications' => explode(',', $appointment->specifications),
                     'subspecifications' => explode(',', $appointment->subspecifications),
-                    'clincs' => [],
+                    'clincs' => $this->getClinics($appointment->clinic_id),
                 ];
-
-
-                $doctorDetails['clincs'] = $this->getClinics($appointment->clinic_id);
 
                 // Combine appointment and doctor details
                 $combinedDetails = array_merge($appointmentDetails, $doctorDetails);
@@ -226,6 +318,7 @@ class AppoinmentsController extends BaseController
                 // Add to the array
                 $appointmentsWithDetails[] = $combinedDetails;
             }
+
 
             // Return a success response with the appointments, doctor details, and current ongoing token
             return $this->sendResponse('Appointments', ['appointmentsDetails' => $appointmentsWithDetails, 'currentOngoingToken' => $currentOngoingToken], '1', 'Appointments retrieved successfully.');
@@ -246,7 +339,6 @@ class AppoinmentsController extends BaseController
 
             $currentOngoingToken = TokenBooking::where('doctor_id', $doctorId)
                 ->where('Is_checkIn', 1)
-                ->where('Is_completed', 1)
                 ->where('date', $currentDate)
                 ->orderBy('TokenNumber', 'ASC')
                 ->pluck('TokenNumber');
